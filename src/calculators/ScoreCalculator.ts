@@ -12,8 +12,13 @@ export class ScoreCalculator {
     return (1 - (payoutRatio - 0.6) / 0.4) * 100;
   }
 
-  static calculateFCFCoverageScore(coverage: number): number {
-    if (!isFinite(coverage)) return 0;
+  static calculateFCFCoverageScore(coverage: number, payoutRatio: number = NaN): number {
+    if (!isFinite(coverage)) {
+      if (isFinite(payoutRatio) && payoutRatio <= 0.6) {
+        return 50;
+      }
+      return 0;
+    }
     if (coverage >= 2) return 100;
     if (coverage <= 0) return 0;
     
@@ -32,7 +37,7 @@ export class ScoreCalculator {
   static calculateDividendScores(fundamentals: Fundamentals, streak: number, safeGrowth: number): DividendScores {
     return new DividendScores({
       payout: this.calculatePayoutScore(fundamentals.epsPayoutRatio),
-      fcf: this.calculateFCFCoverageScore(fundamentals.fcfCoverage),
+      fcf: this.calculateFCFCoverageScore(fundamentals.fcfCoverage, fundamentals.epsPayoutRatio),
       streak: this.calculateStreakScore(streak),
       growth: this.calculateGrowthScore(safeGrowth)
     });
