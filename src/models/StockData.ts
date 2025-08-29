@@ -4,11 +4,15 @@ export class Quote {
   public readonly price: number;
   public readonly currency: string;
   public readonly name: string;
+  public readonly sector: string | null;
+  public readonly industry: string | null;
 
-  constructor({ regularMarketPrice, postMarketPrice, preMarketPrice, currency, shortName, longName }: YahooQuoteResponse) {
+  constructor({ regularMarketPrice, postMarketPrice, preMarketPrice, currency, shortName, longName, sector, industry }: YahooQuoteResponse) {
     this.price = regularMarketPrice || postMarketPrice || preMarketPrice || 0;
     this.currency = currency || "USD";
     this.name = shortName || longName || "";
+    this.sector = sector || null;
+    this.industry = industry || null;
   }
 }
 

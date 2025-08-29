@@ -5,6 +5,8 @@ export interface YahooQuoteResponse {
   currency?: string;
   shortName?: string;
   longName?: string;
+  sector?: string | undefined;
+  industry?: string | undefined;
 }
 
 export interface YahooDividendEvent {
@@ -46,6 +48,12 @@ export interface YahooQuoteSummaryResponse {
     payoutRatio?: YahooFieldValue;
   };
   financialData?: Record<string, unknown>;
+  assetProfile?: {
+    sector?: string;
+    industry?: string;
+    website?: string;
+    country?: string;
+  };
 }
 
 export interface YahooChartOptions {

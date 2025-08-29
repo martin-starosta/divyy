@@ -50,7 +50,7 @@ export class DatabaseService {
     return createHash('md5').update(normalized).digest('hex').substring(0, 16);
   }
 
-  static async ensureTicker(symbol: string, name?: string, sector?: string): Promise<string> {
+  static async ensureTicker(symbol: string, name?: string, sector?: string, industry?: string): Promise<string> {
     // Try to get existing ticker
     const { data: existingTicker, error: selectError } = await supabase
       .from('tickers')
@@ -72,7 +72,8 @@ export class DatabaseService {
       .insert({
         symbol: symbol.toUpperCase(),
         name: name || null,
-        sector: sector || null
+        sector: sector || null,
+        industry: industry || null
       })
       .select('id')
       .single();
@@ -93,7 +94,8 @@ export class DatabaseService {
       const tickerId = await this.ensureTicker(
         analysis.ticker,
         analysis.quote.name,
-        // We don't have sector in current analysis, could be added later
+        analysis.quote.sector || undefined,
+        analysis.quote.industry || undefined
       );
 
       const optionsHash = this.createOptionsHash(options);
@@ -256,7 +258,9 @@ export class DatabaseService {
     const quote = new Quote({
       regularMarketPrice: rawAnalysis.quote.price,
       currency: rawAnalysis.quote.currency,
-      shortName: rawAnalysis.quote.name
+      shortName: rawAnalysis.quote.name,
+      sector: rawAnalysis.quote.sector,
+      industry: rawAnalysis.quote.industry
     });
 
     // Reconstruct the Fundamentals object

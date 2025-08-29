@@ -13,21 +13,54 @@ export class YahooFinanceService {
   
   async getQuote(ticker: string): Promise<Quote> {
     try {
-      const quote = await RetryHandler.withRetry(
-        async () => {
-          const result = await yahooFinance.quote(ticker);
-          if (!result) {
-            throw new TickerNotFoundError(ticker);
-          }
-          return result;
-        },
-        RetryHandler.getNetworkRetryConfig()
-      );
+      const [quote, companyInfo] = await Promise.all([
+        RetryHandler.withRetry(
+          async () => {
+            const result = await yahooFinance.quote(ticker);
+            if (!result) {
+              throw new TickerNotFoundError(ticker);
+            }
+            return result;
+          },
+          RetryHandler.getNetworkRetryConfig()
+        ),
+        this.getCompanyInfo(ticker)
+      ]);
+
+      // Validate the raw quote data first
+      const validatedQuote = DataQualityChecker.validateQuote(quote);
       
-      return DataQualityChecker.validateQuote(quote);
+      // Then enhance with company info by creating new Quote with merged data
+      return new Quote({
+        ...quote,
+        sector: companyInfo.sector || undefined,
+        industry: companyInfo.industry || undefined
+      });
       
     } catch (error) {
       throw this.handleYahooError(error, 'quote', ticker);
+    }
+  }
+
+  async getCompanyInfo(ticker: string): Promise<{sector: string | null, industry: string | null}> {
+    try {
+      const quoteSummary = await RetryHandler.withRetry(
+        async () => {
+          return await yahooFinance.quoteSummary(ticker, {
+            modules: ["assetProfile"] as const
+          });
+        },
+        RetryHandler.getDataSourceRetryConfig()
+      );
+      
+      const profile = (quoteSummary as any)?.assetProfile;
+      return {
+        sector: profile?.sector || null,
+        industry: profile?.industry || null
+      };
+    } catch (error) {
+      console.warn(`Failed to fetch company info for ${ticker}:`, error instanceof Error ? error.message : 'Unknown error');
+      return { sector: null, industry: null };
     }
   }
 
