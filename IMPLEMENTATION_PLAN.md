@@ -88,10 +88,10 @@ divvy <TICKER> --r 0.10           # Custom required return for DDM
 - [x] Forward yield projection
 - [x] Optional DDM valuation
 
-### Phase 2: Enhanced Features
+### Phase 2: Enhanced Features ✓
 - [ ] Alpha Vantage fallback integration
-- [ ] Better error handling and data validation
-- [ ] Output formatting improvements
+- [x] Better error handling and data validation
+- [x] Output formatting improvements  
 - [ ] Configuration file support
 - [ ] Multiple ticker batch processing
 

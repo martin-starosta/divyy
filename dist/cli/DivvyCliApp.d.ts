@@ -5,4 +5,7 @@ export declare class DivvyCliApp {
     private setupCommander;
     private parseArguments;
     run(): Promise<void>;
+    private handleError;
+    private gatherWarnings;
+    private countFundamentalFields;
 }

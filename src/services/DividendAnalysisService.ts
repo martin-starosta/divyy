@@ -10,6 +10,10 @@ export class DividendAnalysisService {
   constructor() {
     this.yahooService = new YahooFinanceService();
   }
+  
+  async healthCheck(): Promise<{ available: boolean; latency: number; error?: string }> {
+    return this.yahooService.healthCheck();
+  }
 
   async analyze(ticker: string, years: number = 15, _requiredReturn: number = 0.09): Promise<DividendAnalysis> {
     const quote = await this.yahooService.getQuote(ticker);

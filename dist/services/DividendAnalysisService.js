@@ -8,6 +8,9 @@ export class DividendAnalysisService {
     constructor() {
         this.yahooService = new YahooFinanceService();
     }
+    async healthCheck() {
+        return this.yahooService.healthCheck();
+    }
     async analyze(ticker, years = 15, _requiredReturn = 0.09) {
         const quote = await this.yahooService.getQuote(ticker);
         const dividendEvents = await this.yahooService.getDividendEvents(ticker, years);
