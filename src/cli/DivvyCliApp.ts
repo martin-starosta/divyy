@@ -11,6 +11,7 @@ interface ParsedArguments {
   ticker: string;
   years: number;
   requiredReturn: number;
+  provider: string;
 }
 
 export class DivvyCliApp {
@@ -30,6 +31,7 @@ export class DivvyCliApp {
       .argument("<ticker>", "Stock ticker symbol, e.g. AAPL")
       .option("-y, --years <n>", "Years of dividend history to fetch", "15")
       .option("--r <pct>", "Required return for optional DDM output (e.g. 0.09)", "0.09")
+      .option("--provider <name>", "Data provider: yahoo, av, or auto", "yahoo")
       .option("--no-save", "Skip saving analysis results to database")
       .option("--force-fresh", "Force fresh analysis, bypass 24h cache")
       .option("--verbose", "Show detailed data quality information")
@@ -57,10 +59,13 @@ export class DivvyCliApp {
     // Validate required return
     const requiredReturn = InputValidator.validateRequiredReturn(options.r);
     
+    // Validate provider
+    const provider = InputValidator.validateProvider(options.provider);
+    
     // Validate all options together
     InputValidator.validateCommanderOptions(options);
 
-    return { ticker, years, requiredReturn };
+    return { ticker, years, requiredReturn, provider };
   }
 
   async run(): Promise<void> {
@@ -74,7 +79,7 @@ export class DivvyCliApp {
         }
       }
       
-      const { ticker, years, requiredReturn } = this.parseArguments();
+      const { ticker, years, requiredReturn, provider } = this.parseArguments();
       const options = this.program.opts();
       
       // Show progress for long operations
@@ -82,7 +87,7 @@ export class DivvyCliApp {
         console.log(`🔍 Analyzing ${ticker}... (${years} years of data)`);
       }
       
-      const analysis = await this.analysisService.analyze(ticker, years, requiredReturn, options.save !== false, options.forceFresh);
+      const analysis = await this.analysisService.analyze(ticker, years, requiredReturn, options.save !== false, options.forceFresh, provider);
       
       // Show data quality warnings if enabled
       if (!options.noWarnings) {
