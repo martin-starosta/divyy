@@ -31,13 +31,28 @@ export class DividendCalculator {
     const sorted = annualSeries.slice().sort((a, b) => a[0] - b[0]);
     let streak = 0;
     
+    // Improved calculation with better tolerance for real-world data issues
     for (let i = sorted.length - 1; i > 0; i--) {
       const current = sorted[i][1];
       const previous = sorted[i - 1][1];
       
-      if (current >= previous * 0.999) {
+      // Allow up to 2% decline to handle data rounding, stock splits, and minor cuts
+      // This is more realistic for dividend analysis while still being conservative
+      if (current >= previous * 0.98) {
         streak++;
       } else {
+        // Check if this might be a data quality issue rather than a real cut
+        const decline = (previous - current) / previous;
+        
+        // If decline is small (< 5%) and next year recovers, might be data noise
+        if (decline < 0.05 && i < sorted.length - 1) {
+          const nextYear = sorted[i + 1][1];
+          if (nextYear >= previous * 0.98) {
+            // Likely data noise, continue streak but with lower confidence
+            streak++;
+            continue;
+          }
+        }
         break;
       }
     }

@@ -1,4 +1,5 @@
 import type { DividendAnalysis } from '../models/DividendAnalysis.js';
+import { DividendEliteDetector } from '../data/DividendAristocrats.js';
 
 export class OutputFormatter {
   static formatPercentage(value: number | null): string {
@@ -18,7 +19,16 @@ export class OutputFormatter {
     console.log(`Price:                 ${this.formatNumber(quote.price)} ${quote.currency}`);
     console.log(`TTM Dividends:         ${this.formatNumber(ttmDividends)} (${this.formatPercentage(ttmYield)})`);
     console.log(`3y/5y Dividend CAGR:   ${cagr3 == null ? "—" : this.formatPercentage(cagr3)} / ${cagr5 == null ? "—" : this.formatPercentage(cagr5)}`);
-    console.log(`Dividend streak:       ${streak} year(s)`);
+    // Enhanced dividend streak display with elite status
+    const eliteStock = DividendEliteDetector.isKnownElite(ticker);
+    let streakDisplay = `${streak} year(s)`;
+    
+    if (eliteStock) {
+      const badge = eliteStock.category === 'king' ? '👑 King' : '🏆 Aristocrat';
+      streakDisplay = `${streak} year(s) ${badge}`;
+    }
+    
+    console.log(`Dividend streak:       ${streakDisplay}`);
     console.log(`EPS payout ratio:      ${!isFinite(fundamentals.epsPayoutRatio) ? "—" : this.formatPercentage(fundamentals.epsPayoutRatio)}`);
     console.log(`FCF payout ratio:      ${!isFinite(fundamentals.fcfPayoutRatio) ? "—" : this.formatPercentage(fundamentals.fcfPayoutRatio)}`);
     console.log(`FCF coverage:          ${!isFinite(fundamentals.fcfCoverage) ? "—" : this.formatNumber(fundamentals.fcfCoverage, 2)}x`);

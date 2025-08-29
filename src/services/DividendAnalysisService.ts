@@ -2,6 +2,7 @@ import { YahooFinanceService } from "./YahooFinanceService.js";
 import { DividendCalculator } from "../calculators/DividendCalculator.js";
 import { ScoreCalculator } from "../calculators/ScoreCalculator.js";
 import { DividendAnalysis } from "../models/DividendAnalysis.js";
+import { DividendEliteDetector } from "../data/DividendAristocrats.js";
 import { calculateCAGR } from "../utils/MathUtils.js";
 
 export class DividendAnalysisService {
@@ -29,7 +30,24 @@ export class DividendAnalysisService {
     
     const cagr3 = last3.length >= 3 ? calculateCAGR(last3) : null;
     const cagr5 = last5.length >= 5 ? calculateCAGR(last5) : null;
-    const streak = DividendCalculator.calculateDividendStreak(annualDividends);
+    
+    // Calculate dividend streak with enhanced logic
+    const rawStreak = DividendCalculator.calculateDividendStreak(annualDividends);
+    
+    // Validate against known dividend elite stocks
+    const streakValidation = DividendEliteDetector.validateStreak(ticker, rawStreak);
+    const { adjustedStreak, rationale } = DividendEliteDetector.getAdjustedStreak(ticker, rawStreak);
+    
+    // Use adjusted streak for analysis
+    const streak = adjustedStreak;
+    
+    // Log data quality issues for known elite stocks
+    if (streakValidation.warning && !process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
+      console.warn(`⚠️  Dividend Streak: ${streakValidation.warning}`);
+      if (rationale) {
+        console.warn(`🔧 Adjustment: ${rationale}`);
+      }
+    }
 
     const safeGrowth = DividendCalculator.calculateSafeGrowth(cagr5, cagr3, fundamentals, streak);
     const forwardDividend = isFinite(ttmDividends) ? ttmDividends * (1 + safeGrowth) : NaN;
