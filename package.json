@@ -11,10 +11,15 @@
     "build": "tsc",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "refresh-leaderboard": "node scripts/refresh-leaderboard.js",
+    "test-db": "tsx test-db-connection.js",
+    "test-cache": "tsx test-caching.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.56.1",
     "commander": "^12.1.0",
+    "dotenv": "^17.2.1",
     "yahoo-finance2": "^2.13.3"
   },
   "devDependencies": {

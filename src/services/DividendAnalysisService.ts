@@ -4,6 +4,7 @@ import { ScoreCalculator } from "../calculators/ScoreCalculator.js";
 import { DividendAnalysis } from "../models/DividendAnalysis.js";
 import { DividendEliteDetector } from "../data/DividendAristocrats.js";
 import { calculateCAGR } from "../utils/MathUtils.js";
+import { DatabaseService, type AnalysisOptions } from "./DatabaseService.js";
 
 export class DividendAnalysisService {
   private readonly yahooService: YahooFinanceService;
@@ -16,7 +17,40 @@ export class DividendAnalysisService {
     return this.yahooService.healthCheck();
   }
 
-  async analyze(ticker: string, years: number = 15, _requiredReturn: number = 0.09): Promise<DividendAnalysis> {
+  async analyze(
+    ticker: string, 
+    years: number = 15, 
+    requiredReturn: number = 0.09,
+    saveToDb: boolean = true,
+    forceFresh: boolean = false
+  ): Promise<DividendAnalysis> {
+    // Create options hash for caching
+    const options: AnalysisOptions = {
+      requiredReturn,
+      years,
+      periods: years
+    };
+    const optionsHash = DatabaseService.createOptionsHash(options);
+
+    // Check for recent cached analysis (within 24 hours) unless forced fresh
+    if (saveToDb && !forceFresh) {
+      try {
+        const cachedRecord = await DatabaseService.getRecentAnalysis(ticker, optionsHash, 24);
+        if (cachedRecord) {
+          console.log(`📋 Using cached analysis for ${ticker} (${new Date(cachedRecord.observed_at).toLocaleString()})`);
+          return DatabaseService.hydrateAnalysisFromRecord(cachedRecord);
+        }
+      } catch (error) {
+        console.warn('Cache lookup failed, proceeding with fresh analysis:', error instanceof Error ? error.message : 'Unknown error');
+      }
+    }
+
+    if (forceFresh) {
+      console.log(`🔄 Force fresh analysis requested for ${ticker}, bypassing cache`);
+    }
+
+    // Perform fresh analysis
+    console.log(`🔍 Performing fresh analysis for ${ticker}...`);
     const quote = await this.yahooService.getQuote(ticker);
     const dividendEvents = await this.yahooService.getDividendEvents(ticker, years);
     const fundamentals = await this.yahooService.getFundamentals(ticker, years);
@@ -56,7 +90,7 @@ export class DividendAnalysisService {
     const scores = ScoreCalculator.calculateDividendScores(fundamentals, streak, safeGrowth);
     const totalScore = ScoreCalculator.calculateTotalScore(scores);
 
-    return new DividendAnalysis({
+    const analysis = new DividendAnalysis({
       ticker,
       quote,
       ttmDividends,
@@ -72,5 +106,18 @@ export class DividendAnalysisService {
       scores,
       totalScore
     });
+
+    // Save to database if requested
+    if (saveToDb) {
+      try {
+        await DatabaseService.saveAnalysis(analysis, options);
+        console.log(`💾 Analysis saved to database for ${ticker}`);
+      } catch (error) {
+        console.warn('Failed to save analysis to database:', error instanceof Error ? error.message : 'Unknown error');
+        // Don't throw - analysis should still succeed even if DB save fails
+      }
+    }
+
+    return analysis;
   }
 }

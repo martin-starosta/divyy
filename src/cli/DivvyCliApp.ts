@@ -26,10 +26,12 @@ export class DivvyCliApp {
   private setupCommander(): void {
     this.program
       .name("divvy")
-      .description("Estimate dividend yield potential for a stock (free data).")
+      .description("Estimate dividend yield potential for a stock (free data). Results are automatically saved to database.")
       .argument("<ticker>", "Stock ticker symbol, e.g. AAPL")
       .option("-y, --years <n>", "Years of dividend history to fetch", "15")
       .option("--r <pct>", "Required return for optional DDM output (e.g. 0.09)", "0.09")
+      .option("--no-save", "Skip saving analysis results to database")
+      .option("--force-fresh", "Force fresh analysis, bypass 24h cache")
       .option("--verbose", "Show detailed data quality information")
       .option("--no-warnings", "Suppress warning messages")
       .version("1.0.0")
@@ -80,7 +82,7 @@ export class DivvyCliApp {
         console.log(`🔍 Analyzing ${ticker}... (${years} years of data)`);
       }
       
-      const analysis = await this.analysisService.analyze(ticker, years, requiredReturn);
+      const analysis = await this.analysisService.analyze(ticker, years, requiredReturn, options.save !== false, options.forceFresh);
       
       // Show data quality warnings if enabled
       if (!options.noWarnings) {
