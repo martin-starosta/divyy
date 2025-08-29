@@ -5,11 +5,13 @@ import { DividendAnalysis } from "../models/DividendAnalysis.js";
 import { calculateCAGR } from "../utils/MathUtils.js";
 
 export class DividendAnalysisService {
+  private readonly yahooService: YahooFinanceService;
+
   constructor() {
     this.yahooService = new YahooFinanceService();
   }
 
-  async analyze(ticker, years = 15, requiredReturn = 0.09) {
+  async analyze(ticker: string, years: number = 15, _requiredReturn: number = 0.09): Promise<DividendAnalysis> {
     const quote = await this.yahooService.getQuote(ticker);
     const dividendEvents = await this.yahooService.getDividendEvents(ticker, years);
     const fundamentals = await this.yahooService.getFundamentals(ticker, years);
@@ -27,7 +29,7 @@ export class DividendAnalysisService {
 
     const safeGrowth = DividendCalculator.calculateSafeGrowth(cagr5, cagr3, fundamentals, streak);
     const forwardDividend = isFinite(ttmDividends) ? ttmDividends * (1 + safeGrowth) : NaN;
-    const forwardYield = quote.price ? forwardDividend / quote.price : NaN;
+    const forwardYield = quote.price ? forwardDividend / quote.price : null;
 
     const scores = ScoreCalculator.calculateDividendScores(fundamentals, streak, safeGrowth);
     const totalScore = ScoreCalculator.calculateTotalScore(scores);

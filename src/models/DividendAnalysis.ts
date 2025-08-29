@@ -1,0 +1,90 @@
+import type { Quote, Fundamentals } from './StockData.js';
+
+export type AnnualDividendData = [year: number, amount: number];
+
+export interface DividendAnalysisParams {
+  ticker: string;
+  quote: Quote;
+  ttmDividends: number;
+  ttmYield: number | null;
+  annualDividends: AnnualDividendData[];
+  cagr3: number | null;
+  cagr5: number | null;
+  streak: number;
+  fundamentals: Fundamentals;
+  safeGrowth: number;
+  forwardDividend: number;
+  forwardYield: number | null;
+  scores: DividendScores;
+  totalScore: number;
+}
+
+export class DividendAnalysis {
+  public readonly ticker: string;
+  public readonly quote: Quote;
+  public readonly ttmDividends: number;
+  public readonly ttmYield: number | null;
+  public readonly annualDividends: AnnualDividendData[];
+  public readonly cagr3: number | null;
+  public readonly cagr5: number | null;
+  public readonly streak: number;
+  public readonly fundamentals: Fundamentals;
+  public readonly safeGrowth: number;
+  public readonly forwardDividend: number;
+  public readonly forwardYield: number | null;
+  public readonly scores: DividendScores;
+  public readonly totalScore: number;
+
+  constructor({
+    ticker,
+    quote,
+    ttmDividends,
+    ttmYield,
+    annualDividends,
+    cagr3,
+    cagr5,
+    streak,
+    fundamentals,
+    safeGrowth,
+    forwardDividend,
+    forwardYield,
+    scores,
+    totalScore
+  }: DividendAnalysisParams) {
+    this.ticker = ticker;
+    this.quote = quote;
+    this.ttmDividends = ttmDividends;
+    this.ttmYield = ttmYield;
+    this.annualDividends = annualDividends;
+    this.cagr3 = cagr3;
+    this.cagr5 = cagr5;
+    this.streak = streak;
+    this.fundamentals = fundamentals;
+    this.safeGrowth = safeGrowth;
+    this.forwardDividend = forwardDividend;
+    this.forwardYield = forwardYield;
+    this.scores = scores;
+    this.totalScore = totalScore;
+  }
+}
+
+export interface DividendScoresParams {
+  payout: number;
+  fcf: number;
+  streak: number;
+  growth: number;
+}
+
+export class DividendScores {
+  public readonly payout: number;
+  public readonly fcf: number;
+  public readonly streak: number;
+  public readonly growth: number;
+
+  constructor({ payout, fcf, streak, growth }: DividendScoresParams) {
+    this.payout = payout;
+    this.fcf = fcf;
+    this.streak = streak;
+    this.growth = growth;
+  }
+}

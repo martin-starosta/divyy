@@ -1,8 +1,10 @@
-import { sum, calculateCAGR, clamp } from "../utils/MathUtils.js";
+import { sum, clamp } from "../utils/MathUtils.js";
+import type { DividendEvent, Fundamentals } from "../models/StockData.js";
+import type { AnnualDividendData } from "../models/DividendAnalysis.js";
 
 export class DividendCalculator {
-  static annualizeDividends(dividendEvents) {
-    const map = new Map();
+  static annualizeDividends(dividendEvents: DividendEvent[]): AnnualDividendData[] {
+    const map = new Map<number, number>();
     
     for (const event of dividendEvents) {
       const year = event.year;
@@ -14,7 +16,7 @@ export class DividendCalculator {
     return [...map.entries()].sort((a, b) => a[0] - b[0]);
   }
 
-  static calculateTTMDividends(dividendEvents) {
+  static calculateTTMDividends(dividendEvents: DividendEvent[]): number {
     const now = Date.now();
     const oneYearAgo = now - (365 * 24 * 3600 * 1000);
     
@@ -25,7 +27,7 @@ export class DividendCalculator {
     );
   }
 
-  static calculateDividendStreak(annualSeries) {
+  static calculateDividendStreak(annualSeries: AnnualDividendData[]): number {
     const sorted = annualSeries.slice().sort((a, b) => a[0] - b[0]);
     let streak = 0;
     
@@ -43,7 +45,12 @@ export class DividendCalculator {
     return streak;
   }
 
-  static calculateSafeGrowth(cagr5, cagr3, fundamentals, streak) {
+  static calculateSafeGrowth(
+    cagr5: number | null, 
+    cagr3: number | null, 
+    fundamentals: Fundamentals, 
+    streak: number
+  ): number {
     const growthBase = cagr5 ?? cagr3 ?? 0;
     let safeGrowth = clamp(growthBase, -0.10, 0.15);
     
@@ -59,7 +66,12 @@ export class DividendCalculator {
     return safeGrowth;
   }
 
-  static calculateGordonGrowthModel(forwardDividend, price, requiredReturn, safeGrowth) {
+  static calculateGordonGrowthModel(
+    forwardDividend: number, 
+    price: number, 
+    requiredReturn: number, 
+    safeGrowth: number
+  ): number | null {
     if (!price || !isFinite(forwardDividend)) return null;
     
     const conservativeGrowth = Math.max(-0.05, Math.min(0.06, safeGrowth));

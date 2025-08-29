@@ -3,14 +3,23 @@ import { DividendAnalysisService } from "../services/DividendAnalysisService.js"
 import { DividendCalculator } from "../calculators/DividendCalculator.js";
 import { OutputFormatter } from "../formatters/OutputFormatter.js";
 
+interface ParsedArguments {
+  ticker: string;
+  years: number;
+  requiredReturn: number;
+}
+
 export class DivvyCliApp {
+  private readonly analysisService: DividendAnalysisService;
+  private readonly program: Command;
+
   constructor() {
     this.analysisService = new DividendAnalysisService();
     this.program = new Command();
     this.setupCommander();
   }
 
-  setupCommander() {
+  private setupCommander(): void {
     this.program
       .name("divvy")
       .description("Estimate dividend yield potential for a stock (free data).")
@@ -19,7 +28,7 @@ export class DivvyCliApp {
       .option("--r <pct>", "Required return for optional DDM output (e.g. 0.09)", "0.09");
   }
 
-  parseArguments() {
+  private parseArguments(): ParsedArguments {
     this.program.parse(process.argv);
     
     const options = this.program.opts();
@@ -30,7 +39,7 @@ export class DivvyCliApp {
     return { ticker, years, requiredReturn };
   }
 
-  async run() {
+  async run(): Promise<void> {
     try {
       const { ticker, years, requiredReturn } = this.parseArguments();
       
@@ -52,7 +61,8 @@ export class DivvyCliApp {
       OutputFormatter.formatFooter();
       
     } catch (error) {
-      console.error("Error:", error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error("Error:", errorMessage);
       process.exit(1);
     }
   }

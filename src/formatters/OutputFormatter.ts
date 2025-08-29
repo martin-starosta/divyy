@@ -1,13 +1,15 @@
+import type { DividendAnalysis } from '../models/DividendAnalysis.js';
+
 export class OutputFormatter {
-  static formatPercentage(value) {
-    return isFinite(value) ? (value * 100).toFixed(2) + "%" : "—";
+  static formatPercentage(value: number | null): string {
+    return value != null && isFinite(value) ? (value * 100).toFixed(2) + "%" : "—";
   }
 
-  static formatNumber(value, digits = 2) {
+  static formatNumber(value: number | null, digits: number = 2): string {
     return value == null || !isFinite(value) ? "—" : value.toFixed(digits);
   }
 
-  static formatDividendAnalysis(analysis, requiredReturn) {
+  static formatDividendAnalysis(analysis: DividendAnalysis, _requiredReturn: number): void {
     const { ticker, quote, ttmDividends, ttmYield, cagr3, cagr5, streak, fundamentals, 
             safeGrowth, forwardDividend, forwardYield, scores, totalScore } = analysis;
     
@@ -17,8 +19,8 @@ export class OutputFormatter {
     console.log(`TTM Dividends:         ${this.formatNumber(ttmDividends)} (${this.formatPercentage(ttmYield)})`);
     console.log(`3y/5y Dividend CAGR:   ${cagr3 == null ? "—" : this.formatPercentage(cagr3)} / ${cagr5 == null ? "—" : this.formatPercentage(cagr5)}`);
     console.log(`Dividend streak:       ${streak} year(s)`);
-    console.log(`EPS payout ratio:      ${fundamentals.epsPayoutRatio == null ? "—" : this.formatPercentage(fundamentals.epsPayoutRatio)}`);
-    console.log(`FCF payout ratio:      ${fundamentals.fcfPayoutRatio == null ? "—" : this.formatPercentage(fundamentals.fcfPayoutRatio)}`);
+    console.log(`EPS payout ratio:      ${!isFinite(fundamentals.epsPayoutRatio) ? "—" : this.formatPercentage(fundamentals.epsPayoutRatio)}`);
+    console.log(`FCF payout ratio:      ${!isFinite(fundamentals.fcfPayoutRatio) ? "—" : this.formatPercentage(fundamentals.fcfPayoutRatio)}`);
     console.log(`FCF coverage:          ${!isFinite(fundamentals.fcfCoverage) ? "—" : this.formatNumber(fundamentals.fcfCoverage, 2)}x`);
     console.log(`Safe growth used:      ${this.formatPercentage(safeGrowth)}`);
     console.log(`Expected fwd yield:    ${this.formatPercentage(forwardYield)}  (from D1=${this.formatNumber(forwardDividend)})`);
@@ -26,14 +28,14 @@ export class OutputFormatter {
     console.log(`• Drivers → payout:${this.formatNumber(scores.payout, 0)} fcf:${this.formatNumber(scores.fcf, 0)} streak:${this.formatNumber(scores.streak, 0)} growth:${this.formatNumber(scores.growth, 0)}`);
   }
 
-  static formatGordonGrowthModel(ddmPrice, currentPrice, requiredReturn, safeGrowth) {
+  static formatGordonGrowthModel(ddmPrice: number | null, currentPrice: number, requiredReturn: number, safeGrowth: number): void {
     if (ddmPrice) {
       const ddmUpside = (ddmPrice - currentPrice) / currentPrice;
       console.log(`\n[DDM] r=${(requiredReturn * 100).toFixed(1)}% g=${this.formatPercentage(safeGrowth)}  ->  price*= ${this.formatNumber(ddmPrice)}  (${this.formatPercentage(ddmUpside)} vs current)`);
     }
   }
 
-  static formatFooter() {
+  static formatFooter(): void {
     console.log("\nNotes: This is an educational heuristic, not investment advice.");
   }
 }
