@@ -6,6 +6,7 @@ export class InputValidator {
   private static readonly MAX_YEARS = 50;
   private static readonly MIN_REQUIRED_RETURN = 0.001; // 0.1%
   private static readonly MAX_REQUIRED_RETURN = 1.0;   // 100%
+  private static readonly VALID_PROVIDERS = ['yahoo', 'av', 'auto'];
   
   static validateTicker(ticker: string): string {
     if (!ticker) {
@@ -111,6 +112,27 @@ export class InputValidator {
     return numReturn;
   }
   
+  static validateProvider(provider: string): string {
+    if (!provider) {
+      throw new ValidationError('Provider is required', 'provider');
+    }
+    
+    if (typeof provider !== 'string') {
+      throw new ValidationError('Provider must be a string', 'provider');
+    }
+    
+    const cleanProvider = provider.trim().toLowerCase();
+    
+    if (!this.VALID_PROVIDERS.includes(cleanProvider)) {
+      throw new ValidationError(
+        `Invalid provider "${provider}". Valid providers: ${this.VALID_PROVIDERS.join(', ')}`, 
+        'provider'
+      );
+    }
+    
+    return cleanProvider;
+  }
+  
   static validateCommanderOptions(options: any): void {
     if (!options || typeof options !== 'object') {
       throw new ConfigurationError('Invalid command options');
@@ -135,6 +157,18 @@ export class InputValidator {
       } catch (error) {
         if (error instanceof ValidationError) {
           throw new ValidationError(`Invalid --r parameter: ${error.message}`, 'requiredReturn');
+        }
+        throw error;
+      }
+    }
+    
+    // Validate provider if provided
+    if (options.provider !== undefined) {
+      try {
+        this.validateProvider(options.provider);
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          throw new ValidationError(`Invalid --provider parameter: ${error.message}`, 'provider');
         }
         throw error;
       }

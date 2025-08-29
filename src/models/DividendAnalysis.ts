@@ -17,6 +17,7 @@ export interface DividendAnalysisParams {
   forwardYield: number | null;
   scores: DividendScores;
   totalScore: number;
+  ema: EmaData;
 }
 
 export class DividendAnalysis {
@@ -34,6 +35,7 @@ export class DividendAnalysis {
   public readonly forwardYield: number | null;
   public readonly scores: DividendScores;
   public readonly totalScore: number;
+  public readonly ema: EmaData;
 
   constructor({
     ticker,
@@ -49,7 +51,8 @@ export class DividendAnalysis {
     forwardDividend,
     forwardYield,
     scores,
-    totalScore
+    totalScore,
+    ema
   }: DividendAnalysisParams) {
     this.ticker = ticker;
     this.quote = quote;
@@ -65,7 +68,14 @@ export class DividendAnalysis {
     this.forwardYield = forwardYield;
     this.scores = scores;
     this.totalScore = totalScore;
+    this.ema = ema;
   }
+}
+
+export interface EmaData {
+  ema20: number | null;
+  ema50: number | null;
+  ema200: number | null;
 }
 
 export interface DividendScoresParams {
@@ -73,6 +83,7 @@ export interface DividendScoresParams {
   fcf: number;
   streak: number;
   growth: number;
+  trend: number;
 }
 
 export class DividendScores {
@@ -80,11 +91,13 @@ export class DividendScores {
   public readonly fcf: number;
   public readonly streak: number;
   public readonly growth: number;
+  public readonly trend: number;
 
-  constructor({ payout, fcf, streak, growth }: DividendScoresParams) {
+  constructor({ payout, fcf, streak, growth, trend }: DividendScoresParams) {
     this.payout = payout;
     this.fcf = fcf;
     this.streak = streak;
     this.growth = growth;
+    this.trend = trend;
   }
 }

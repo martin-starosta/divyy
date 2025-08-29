@@ -1,16 +1,27 @@
 import { YahooFinanceService } from "./YahooFinanceService.js";
+import { AlphaVantageService } from "./AlphaVantageService.js";
 import { DividendCalculator } from "../calculators/DividendCalculator.js";
 import { ScoreCalculator } from "../calculators/ScoreCalculator.js";
-import { DividendAnalysis } from "../models/DividendAnalysis.js";
+import { DividendAnalysis, EmaData } from "../models/DividendAnalysis.js";
 import { DividendEliteDetector } from "../data/DividendAristocrats.js";
 import { calculateCAGR } from "../utils/MathUtils.js";
 import { DatabaseService, type AnalysisOptions } from "./DatabaseService.js";
+import { TechnicalIndicatorCalculator } from "../calculators/TechnicalIndicatorCalculator.js";
 
 export class DividendAnalysisService {
   private readonly yahooService: YahooFinanceService;
+  private readonly alphaVantageService: AlphaVantageService | null;
 
   constructor() {
     this.yahooService = new YahooFinanceService();
+    
+    // Initialize Alpha Vantage service if API key is available
+    try {
+      this.alphaVantageService = new AlphaVantageService();
+    } catch (error) {
+      console.warn('Alpha Vantage service not available:', error instanceof Error ? error.message : 'Unknown error');
+      this.alphaVantageService = null;
+    }
   }
   
   async healthCheck(): Promise<{ available: boolean; latency: number; error?: string }> {
@@ -22,13 +33,15 @@ export class DividendAnalysisService {
     years: number = 15, 
     requiredReturn: number = 0.09,
     saveToDb: boolean = true,
-    forceFresh: boolean = false
+    forceFresh: boolean = false,
+    provider: string = 'yahoo'
   ): Promise<DividendAnalysis> {
-    // Create options hash for caching
+    // Create options hash for caching (include provider)
     const options: AnalysisOptions = {
       requiredReturn,
       years,
-      periods: years
+      periods: years,
+      provider
     };
     const optionsHash = DatabaseService.createOptionsHash(options);
 
@@ -51,7 +64,33 @@ export class DividendAnalysisService {
 
     // Perform fresh analysis
     console.log(`🔍 Performing fresh analysis for ${ticker}...`);
-    const quote = await this.yahooService.getQuote(ticker);
+    
+    // Get quote and enhance with Alpha Vantage data if requested
+    let quote = await this.yahooService.getQuote(ticker);
+    
+    // Get company overview from Alpha Vantage if provider is 'av' and service is available
+    let companyOverview = null;
+    if (provider === 'av' && this.alphaVantageService) {
+      try {
+        companyOverview = await this.alphaVantageService.getCompanyOverview(ticker);
+        console.log(`📊 Using Alpha Vantage company overview for ${ticker}`);
+        
+        // Create new enhanced quote with AV data if available
+        if (companyOverview.Sector && companyOverview.Industry) {
+          const { Quote } = await import("../models/StockData.js");
+          quote = new Quote({
+            regularMarketPrice: quote.price,
+            currency: quote.currency,
+            shortName: quote.name,
+            sector: companyOverview.Sector,
+            industry: companyOverview.Industry
+          });
+        }
+      } catch (error) {
+        console.warn(`⚠️  Alpha Vantage company overview failed, falling back to Yahoo Finance: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+    
     const dividendEvents = await this.yahooService.getDividendEvents(ticker, years);
     const fundamentals = await this.yahooService.getFundamentals(ticker, years);
 
@@ -87,7 +126,25 @@ export class DividendAnalysisService {
     const forwardDividend = isFinite(ttmDividends) ? ttmDividends * (1 + safeGrowth) : NaN;
     const forwardYield = quote.price ? forwardDividend / quote.price : null;
 
-    const scores = ScoreCalculator.calculateDividendScores(fundamentals, streak, safeGrowth);
+    let ema: EmaData = { ema20: null, ema50: null, ema200: null };
+    if (this.alphaVantageService) {
+      try {
+        const timeSeries = await this.alphaVantageService.getTimeSeriesDaily(ticker, 'full');
+        const closePrices = TechnicalIndicatorCalculator.extractClosePrices(timeSeries);
+        const ema20 = TechnicalIndicatorCalculator.calculateEMA(closePrices, 20);
+        const ema50 = TechnicalIndicatorCalculator.calculateEMA(closePrices, 50);
+        const ema200 = TechnicalIndicatorCalculator.calculateEMA(closePrices, 200);
+        ema = {
+          ema20: ema20.length > 0 ? ema20[ema20.length - 1] : null,
+          ema50: ema50.length > 0 ? ema50[ema50.length - 1] : null,
+          ema200: ema200.length > 0 ? ema200[ema200.length - 1] : null,
+        };
+      } catch (error) {
+        console.warn(`⚠️  Failed to calculate EMAs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+
+    const scores = ScoreCalculator.calculateDividendScores(fundamentals, streak, safeGrowth, quote, ema);
     const totalScore = ScoreCalculator.calculateTotalScore(scores);
 
     const analysis = new DividendAnalysis({
@@ -104,7 +161,8 @@ export class DividendAnalysisService {
       forwardDividend,
       forwardYield,
       scores,
-      totalScore
+      totalScore,
+      ema
     });
 
     // Save to database if requested
