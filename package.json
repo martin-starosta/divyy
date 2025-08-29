@@ -1,0 +1,13 @@
+{
+  "name": "divvy-potential-cli",
+  "version": "0.1.0",
+  "description": "CLI that estimates dividend yield potential from free data sources",
+  "type": "module",
+  "bin": {
+    "divvy": "./index.js"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "yahoo-finance2": "^2.13.3"
+  }
+}
