@@ -8,6 +8,6 @@
   },
   "dependencies": {
     "commander": "^12.1.0",
-    "yahoo-finance2": "^2.13.3"
+    "yahoo-finance2": "^2.11.3"
   }
 }

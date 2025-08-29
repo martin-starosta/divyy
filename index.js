@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import YahooFinance from "yahoo-finance2";
+import yahooFinance from "yahoo-finance2";
 
 const program = new Command();
 program
@@ -16,7 +16,7 @@ const TICKER = program.args[0].toUpperCase();
 const YEARS = Math.max(3, parseInt(opts.years, 10) || 15);
 const REQUIRED_RETURN = Math.max(0.01, Math.min(0.25, parseFloat(opts.r) || 0.09)); // 1%..25%
 
-const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
+// Note: Configuration removed due to API changes
 
 // ---------- util helpers ----------
 const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
@@ -87,7 +87,7 @@ function scoreFromGrowth(g) {
 (async () => {
   try {
     // 1) Quote for price & name
-    const quote = await yf.quote(TICKER);
+    const quote = await yahooFinance.quote(TICKER);
     if (!quote) throw new Error("No quote returned");
     const price = quote.regularMarketPrice || quote.postMarketPrice || quote.preMarketPrice;
     const currency = quote.currency || "USD";
@@ -99,7 +99,7 @@ function scoreFromGrowth(g) {
     const startDate = new Date();
     startDate.setFullYear(endDate.getFullYear() - YEARS);
     
-    const chart = await yf.chart(TICKER, {
+    const chart = await yahooFinance.chart(TICKER, {
       period1: startDate,
       period2: endDate,
       interval: "1mo",
@@ -142,7 +142,7 @@ function scoreFromGrowth(g) {
     
     try {
       // Try fundamentalsTimeSeries first
-      const fundamentals = await yf.fundamentalsTimeSeries(TICKER, {
+      const fundamentals = await yahooFinance.fundamentalsTimeSeries(TICKER, {
         period1: startDate,
         period2: endDate,
         type: "annual",
@@ -164,7 +164,7 @@ function scoreFromGrowth(g) {
     
     // Fallback to quoteSummary for basic ratios
     try {
-      const qs = await yf.quoteSummary(TICKER, {
+      const qs = await yahooFinance.quoteSummary(TICKER, {
         modules: [
           "summaryDetail",
           "defaultKeyStatistics",
