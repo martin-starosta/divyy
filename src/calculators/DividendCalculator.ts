@@ -69,6 +69,17 @@ export class DividendCalculator {
     const growthBase = cagr5 ?? cagr3 ?? 0;
     let safeGrowth = clamp(growthBase, -0.10, 0.15);
     
+    // Graceful handling of bad CAGRs for long streak stocks
+    // If CAGR < -5% but streak >= 20y, assume modest positive growth instead
+    if (safeGrowth < -0.05 && streak >= 20) {
+      // For long streak stocks with bad calculated CAGR, use modest positive growth
+      // This prevents "negative growth" from conflicting with a proven long streak
+      // Use conservative 1.5% as middle ground between 0-3%
+      const adjustedGrowth = 0.015;
+      console.warn(`⚠️  Adjusted negative CAGR (${(growthBase * 100).toFixed(1)}%) to +${(adjustedGrowth * 100).toFixed(1)}% for ${streak}-year streak stock`);
+      safeGrowth = adjustedGrowth;
+    }
+    
     const epsPayoutRatio = fundamentals.epsPayoutRatio;
     const fcfPayoutRatio = fundamentals.fcfPayoutRatio;
     
