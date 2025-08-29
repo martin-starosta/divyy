@@ -277,8 +277,16 @@ export class DatabaseService {
       payout: rawAnalysis.scores.payout,
       fcf: rawAnalysis.scores.fcf,
       streak: rawAnalysis.scores.streak,
-      growth: rawAnalysis.scores.growth
+      growth: rawAnalysis.scores.growth,
+      trend: rawAnalysis.scores.trend || 0 // Default to 0 if not present in old data
     });
+
+    // Reconstruct EMA data (default to null if not present in old data)
+    const ema = {
+      ema20: rawAnalysis.ema?.ema20 || null,
+      ema50: rawAnalysis.ema?.ema50 || null,
+      ema200: rawAnalysis.ema?.ema200 || null
+    };
 
     // Create and return the full DividendAnalysis
     return new DividendAnalysis({
@@ -295,7 +303,8 @@ export class DatabaseService {
       forwardDividend: rawAnalysis.forwardDividend,
       forwardYield: rawAnalysis.forwardYield,
       scores,
-      totalScore: rawAnalysis.totalScore
+      totalScore: rawAnalysis.totalScore,
+      ema
     });
   }
 }

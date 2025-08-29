@@ -24,7 +24,7 @@ export class TechnicalIndicatorCalculator {
     return ema;
   }
 
-  static extractClosePrices(timeSeries: AlphaVantageTimeSeriesDaily): number[] {
+  static extractClosePricesFromAlphaVantage(timeSeries: AlphaVantageTimeSeriesDaily): number[] {
     const dailyData = timeSeries["Time Series (Daily)"];
     if (!dailyData) {
       return [];
@@ -32,5 +32,28 @@ export class TechnicalIndicatorCalculator {
 
     const dates = Object.keys(dailyData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
     return dates.map(date => parseFloat(dailyData[date]["4. close"]));
+  }
+
+  static extractClosePricesFromYahoo(historicalPrices: {date: Date, close: number}[]): number[] {
+    // Sort by date ascending to ensure correct EMA calculation
+    const sortedPrices = historicalPrices.sort((a, b) => a.date.getTime() - b.date.getTime());
+    return sortedPrices.map(data => data.close);
+  }
+
+  // Unified method for extracting close prices from either source
+  static extractClosePrices(data: AlphaVantageTimeSeriesDaily | {date: Date, close: number}[] | null): number[] {
+    if (!data) {
+      return [];
+    }
+    
+    if (this.isAlphaVantageData(data)) {
+      return this.extractClosePricesFromAlphaVantage(data);
+    } else {
+      return this.extractClosePricesFromYahoo(data);
+    }
+  }
+
+  private static isAlphaVantageData(data: any): data is AlphaVantageTimeSeriesDaily {
+    return data && typeof data === 'object' && 'Time Series (Daily)' in data;
   }
 }

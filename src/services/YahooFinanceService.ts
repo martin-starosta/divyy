@@ -28,7 +28,7 @@ export class YahooFinanceService {
       ]);
 
       // Validate the raw quote data first
-      const validatedQuote = DataQualityChecker.validateQuote(quote);
+      DataQualityChecker.validateQuote(quote);
       
       // Then enhance with company info by creating new Quote with merged data
       return new Quote({
@@ -173,6 +173,36 @@ export class YahooFinanceService {
     }
     
     return fundamentals;
+  }
+
+  async getHistoricalPrices(ticker: string, years: number = 1): Promise<{date: Date, close: number}[]> {
+    try {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setFullYear(endDate.getFullYear() - years);
+
+      const chart = await RetryHandler.withRetry(
+        async () => {
+          return await yahooFinance.chart(ticker, {
+            period1: startDate,
+            period2: endDate,
+            interval: "1d" as const,
+          });
+        },
+        RetryHandler.getDataSourceRetryConfig()
+      );
+
+      if (!chart?.quotes) {
+        return [];
+      }
+
+      return chart.quotes
+        .filter(q => q.close !== null && q.close !== undefined)
+        .map(q => ({ date: q.date, close: q.close! }));
+
+    } catch (error) {
+      throw this.handleYahooError(error, 'historical prices', ticker);
+    }
   }
   
   private handleYahooError(error: any, operation: string, ticker: string): Error {

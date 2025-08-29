@@ -34,8 +34,26 @@ export class OutputFormatter {
     console.log(`FCF coverage:          ${!isFinite(fundamentals.fcfCoverage) ? "—" : this.formatNumber(fundamentals.fcfCoverage, 2)}x`);
     console.log(`Safe growth used:      ${this.formatPercentage(safeGrowth)}`);
     console.log(`Expected fwd yield:    ${this.formatPercentage(forwardYield)}  (from D1=${this.formatNumber(forwardDividend)})`);
+    
+    // Add EMA information if available
+    if (analysis.ema && (analysis.ema.ema20 || analysis.ema.ema50 || analysis.ema.ema200)) {
+      console.log(`\nTechnical Indicators:`);
+      if (analysis.ema.ema200) {
+        const ema200Status = quote.price > analysis.ema.ema200 ? 'ABOVE' : 'BELOW';
+        console.log(`• EMA200: ${this.formatNumber(analysis.ema.ema200)} (${ema200Status})`);
+      }
+      if (analysis.ema.ema50) {
+        const ema50Status = quote.price > analysis.ema.ema50 ? 'ABOVE' : 'BELOW';
+        console.log(`• EMA50:  ${this.formatNumber(analysis.ema.ema50)} (${ema50Status})`);
+      }
+      if (analysis.ema.ema20) {
+        const ema20Status = quote.price > analysis.ema.ema20 ? 'ABOVE' : 'BELOW';
+        console.log(`• EMA20:  ${this.formatNumber(analysis.ema.ema20)} (${ema20Status})`);
+      }
+    }
+    
     console.log(`\nDividend Potential Score: ${totalScore}/100`);
-    console.log(`• Drivers → payout:${this.formatNumber(scores.payout, 0)} fcf:${this.formatNumber(scores.fcf, 0)} streak:${this.formatNumber(scores.streak, 0)} growth:${this.formatNumber(scores.growth, 0)}`);
+    console.log(`• Drivers → payout:${this.formatNumber(scores.payout, 0)} fcf:${this.formatNumber(scores.fcf, 0)} streak:${this.formatNumber(scores.streak, 0)} growth:${this.formatNumber(scores.growth, 0)} trend:${this.formatNumber(scores.trend, 0)}`);
   }
 
   static formatGordonGrowthModel(ddmPrice: number | null, currentPrice: number, requiredReturn: number, safeGrowth: number): void {
