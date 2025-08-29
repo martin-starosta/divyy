@@ -188,6 +188,20 @@ export class DivvyCliApp {
       warnings.push('Low dividend sustainability score - exercise caution');
     }
     
+    // Check EMA trends for fundamental concerns
+    if (analysis.ema && analysis.ema.ema200 && analysis.quote.price) {
+      const { ScoreCalculator } = await import('../calculators/ScoreCalculator.js');
+      const emaAnalysis = ScoreCalculator.analyzeEMATrends(analysis.quote.price, analysis.ema);
+      
+      if (emaAnalysis.isUnderEMA200) {
+        warnings.push('Stock trading below EMA200 - market may doubt fundamentals');
+      }
+      
+      if (emaAnalysis.trendStrength === 'strong_bearish' || emaAnalysis.trendStrength === 'bearish') {
+        warnings.push(`Bearish technical trend detected (${emaAnalysis.trendStrength})`);
+      }
+    }
+    
     return warnings;
   }
   

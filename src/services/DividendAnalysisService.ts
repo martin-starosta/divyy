@@ -127,25 +127,73 @@ export class DividendAnalysisService {
     const forwardYield = quote.price ? forwardDividend / quote.price : null;
 
     let ema: EmaData = { ema20: null, ema50: null, ema200: null };
-    if (this.alphaVantageService) {
+    let emaSource = 'none';
+    
+    // Try Alpha Vantage first for EMA calculations
+    if (this.alphaVantageService && (provider === 'av' || provider === 'auto')) {
       try {
         const timeSeries = await this.alphaVantageService.getTimeSeriesDaily(ticker, 'full');
         const closePrices = TechnicalIndicatorCalculator.extractClosePrices(timeSeries);
-        const ema20 = TechnicalIndicatorCalculator.calculateEMA(closePrices, 20);
-        const ema50 = TechnicalIndicatorCalculator.calculateEMA(closePrices, 50);
-        const ema200 = TechnicalIndicatorCalculator.calculateEMA(closePrices, 200);
-        ema = {
-          ema20: ema20.length > 0 ? ema20[ema20.length - 1] : null,
-          ema50: ema50.length > 0 ? ema50[ema50.length - 1] : null,
-          ema200: ema200.length > 0 ? ema200[ema200.length - 1] : null,
-        };
+        
+        if (closePrices.length >= 200) { // Need at least 200 data points for EMA200
+          const ema20 = TechnicalIndicatorCalculator.calculateEMA(closePrices, 20);
+          const ema50 = TechnicalIndicatorCalculator.calculateEMA(closePrices, 50);
+          const ema200 = TechnicalIndicatorCalculator.calculateEMA(closePrices, 200);
+          
+          ema = {
+            ema20: ema20.length > 0 ? ema20[ema20.length - 1] : null,
+            ema50: ema50.length > 0 ? ema50[ema50.length - 1] : null,
+            ema200: ema200.length > 0 ? ema200[ema200.length - 1] : null,
+          };
+          emaSource = 'alphavantage';
+          console.log(`📊 EMA calculated using Alpha Vantage data (${closePrices.length} data points)`);
+        } else {
+          console.warn(`⚠️  Insufficient Alpha Vantage data for EMA calculation (${closePrices.length} points, need 200+)`);
+        }
       } catch (error) {
-        console.warn(`⚠️  Failed to calculate EMAs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.warn(`⚠️  Alpha Vantage EMA calculation failed, falling back to Yahoo Finance: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+    
+    // Fallback to Yahoo Finance if Alpha Vantage failed or not available
+    if (emaSource === 'none') {
+      try {
+        const historicalPrices = await this.yahooService.getHistoricalPrices(ticker, 2); // Get 2 years for EMA200
+        const closePrices = TechnicalIndicatorCalculator.extractClosePrices(historicalPrices);
+        
+        if (closePrices.length >= 200) {
+          const ema20 = TechnicalIndicatorCalculator.calculateEMA(closePrices, 20);
+          const ema50 = TechnicalIndicatorCalculator.calculateEMA(closePrices, 50);
+          const ema200 = TechnicalIndicatorCalculator.calculateEMA(closePrices, 200);
+          
+          ema = {
+            ema20: ema20.length > 0 ? ema20[ema20.length - 1] : null,
+            ema50: ema50.length > 0 ? ema50[ema50.length - 1] : null,
+            ema200: ema200.length > 0 ? ema200[ema200.length - 1] : null,
+          };
+          emaSource = 'yahoo';
+          console.log(`📊 EMA calculated using Yahoo Finance data (${closePrices.length} data points)`);
+        } else {
+          console.warn(`⚠️  Insufficient Yahoo Finance data for EMA calculation (${closePrices.length} points, need 200+)`);
+        }
+      } catch (error) {
+        console.warn(`⚠️  Yahoo Finance EMA calculation also failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
     const scores = ScoreCalculator.calculateDividendScores(fundamentals, streak, safeGrowth, quote, ema);
     const totalScore = ScoreCalculator.calculateTotalScore(scores);
+    
+    // Analyze EMA trends for fundamental concerns
+    const emaAnalysis = ScoreCalculator.analyzeEMATrends(quote.price, ema);
+    
+    // Log EMA trend analysis if there are concerns
+    if (emaAnalysis.fundamentalConcerns.length > 0 && emaAnalysis.fundamentalConcerns[0] !== 'EMA data unavailable') {
+      console.log(`📈 EMA Trend Analysis: ${emaAnalysis.trendStrength.toUpperCase()}`);
+      emaAnalysis.fundamentalConcerns.forEach(concern => {
+        console.log(`   ⚠️  ${concern}`);
+      });
+    }
 
     const analysis = new DividendAnalysis({
       ticker,
