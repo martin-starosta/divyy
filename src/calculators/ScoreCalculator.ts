@@ -1,7 +1,7 @@
 import { clamp } from "../utils/MathUtils.js";
 import { DividendScores, EmaData } from "../models/DividendAnalysis.js";
 import type { Fundamentals, Quote } from "../models/StockData.js";
-import { MacdData } from "./TechnicalIndicatorCalculator.js";
+import { MacdData, RsiData } from "./TechnicalIndicatorCalculator.js";
 
 export class ScoreCalculator {
   static calculatePayoutScore(payoutRatio: number): number {
@@ -106,13 +106,57 @@ export class ScoreCalculator {
     return Math.max(0, Math.min(100, score));
   }
 
+  static calculateRSIScore(rsi: RsiData): number {
+    // If no RSI data available, return neutral score
+    if (!rsi || rsi.rsi === null) {
+      return 50; // Neutral score when data unavailable
+    }
+
+    const rsiValue = rsi.rsi;
+    let score = 50; // Start with neutral score
+
+    // RSI-based scoring logic for dividend stocks
+    // For dividend stocks, we prefer stocks that aren't severely overbought or oversold
+    
+    if (rsiValue >= 20 && rsiValue <= 80) {
+      // Normal range - good for dividend stocks
+      if (rsiValue >= 40 && rsiValue <= 60) {
+        // Sweet spot for dividend investing - not extreme
+        score = 100;
+      } else if (rsiValue >= 30 && rsiValue <= 70) {
+        // Good range
+        score = 85;
+      } else {
+        // Still acceptable but getting toward extremes
+        score = 70;
+      }
+    } else if (rsiValue > 80) {
+      // Overbought - potentially risky entry point for dividend investors
+      if (rsiValue > 90) {
+        score = 10; // Extremely overbought
+      } else {
+        score = 30; // Very overbought
+      }
+    } else if (rsiValue < 20) {
+      // Oversold - could be opportunity but also risk
+      if (rsiValue < 10) {
+        score = 20; // Extremely oversold - high risk/reward
+      } else {
+        score = 40; // Oversold - potential opportunity
+      }
+    }
+
+    return Math.max(0, Math.min(100, score));
+  }
+
   static calculateDividendScores(
     fundamentals: Fundamentals, 
     streak: number, 
     safeGrowth: number,
     quote: Quote,
     ema: EmaData,
-    macd: MacdData
+    macd: MacdData,
+    rsi: RsiData
   ): DividendScores {
     return new DividendScores({
       payout: this.calculatePayoutScore(fundamentals.epsPayoutRatio),
@@ -120,7 +164,8 @@ export class ScoreCalculator {
       streak: this.calculateStreakScore(streak),
       growth: this.calculateGrowthScore(safeGrowth),
       trend: this.calculateTrendScore(quote.price, ema),
-      macd: this.calculateMACDScore(macd)
+      macd: this.calculateMACDScore(macd),
+      rsi: this.calculateRSIScore(rsi)
     });
   }
 
@@ -128,10 +173,11 @@ export class ScoreCalculator {
     return Math.round(
       0.25 * scores.payout +
       0.25 * scores.fcf +
-      0.18 * scores.streak +
-      0.17 * scores.growth +
-      0.08 * scores.trend +
-      0.07 * scores.macd
+      0.17 * scores.streak +
+      0.16 * scores.growth +
+      0.07 * scores.trend +
+      0.06 * scores.macd +
+      0.04 * scores.rsi
     );
   }
 

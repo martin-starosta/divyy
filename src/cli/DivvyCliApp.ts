@@ -215,6 +215,19 @@ export class DivvyCliApp {
       });
     }
     
+    // Check RSI signals for fundamental concerns
+    if (analysis.rsi && analysis.rsi.rsi !== null) {
+      const { TechnicalIndicatorCalculator } = await import('../calculators/TechnicalIndicatorCalculator.js');
+      const rsiAnalysis = TechnicalIndicatorCalculator.analyzeRSI(analysis.rsi);
+      
+      // Add RSI-specific warnings
+      rsiAnalysis.fundamentalConcerns.forEach(concern => {
+        if (concern !== 'RSI data unavailable') {
+          warnings.push(concern);
+        }
+      });
+    }
+    
     return warnings;
   }
   

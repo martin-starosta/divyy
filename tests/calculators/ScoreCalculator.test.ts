@@ -162,7 +162,8 @@ describe('ScoreCalculator', () => {
         safeGrowth,
         quote as any,
         ema,
-        { macdLine: 0.5, signalLine: 0.3, histogram: 0.2 }
+        { macdLine: 0.5, signalLine: 0.3, histogram: 0.2 },
+        { rsi: 50, period: 14 }
       );
       
       expect(result.payout).toBeGreaterThan(0);
@@ -171,6 +172,7 @@ describe('ScoreCalculator', () => {
       expect(result.growth).toBeGreaterThan(0);
       expect(result.trend).toBeGreaterThan(0);
       expect(result.macd).toBeGreaterThan(0);
+      expect(result.rsi).toBeGreaterThan(0);
     });
 
     it('should handle missing fundamental data', () => {
@@ -189,7 +191,8 @@ describe('ScoreCalculator', () => {
         safeGrowth,
         quote as any,
         ema,
-        { macdLine: null, signalLine: null, histogram: null }
+        { macdLine: null, signalLine: null, histogram: null },
+        { rsi: null, period: 14 }
       );
       
       expect(result.payout).toBe(100); // Default for missing payout ratio
@@ -198,6 +201,7 @@ describe('ScoreCalculator', () => {
       expect(result.growth).toBe(0); // Negative growth = 0 score
       expect(result.trend).toBe(100); // Above all EMAs
       expect(result.macd).toBe(50); // Neutral score for missing MACD data
+      expect(result.rsi).toBe(50); // Neutral score for missing RSI data
     });
   });
 
@@ -209,13 +213,14 @@ describe('ScoreCalculator', () => {
         streak: 60,
         growth: 50,
         trend: 40,
-        macd: 50
+        macd: 50,
+        rsi: 45
       };
       
       const result = ScoreCalculator.calculateTotalScore(scores as any);
       
-      // Expected: (0.25 * 80) + (0.25 * 70) + (0.18 * 60) + (0.17 * 50) + (0.08 * 40) + (0.07 * 50) = 63.5
-      expect(result).toBe(64); // Rounded
+      // Expected: (0.25 * 80) + (0.25 * 70) + (0.17 * 60) + (0.16 * 50) + (0.07 * 40) + (0.06 * 50) + (0.04 * 45) = 62.8
+      expect(result).toBe(63); // Rounded
     });
 
     it('should handle perfect scores', () => {
@@ -225,7 +230,8 @@ describe('ScoreCalculator', () => {
         streak: 100,
         growth: 100,
         trend: 100,
-        macd: 100
+        macd: 100,
+        rsi: 100
       };
       
       const result = ScoreCalculator.calculateTotalScore(scores as any);
@@ -239,7 +245,8 @@ describe('ScoreCalculator', () => {
         streak: 0,
         growth: 0,
         trend: 0,
-        macd: 0
+        macd: 0,
+        rsi: 0
       };
       
       const result = ScoreCalculator.calculateTotalScore(scores as any);
@@ -270,6 +277,76 @@ describe('ScoreCalculator', () => {
       expect(trendScore).toBe(0); // Penalized for being below EMA200
       expect(trendAnalysis.trendStrength).toBe('strong_bearish');
       expect(trendAnalysis.fundamentalConcerns).toContain('Stock trading below EMA200 - market may doubt fundamentals');
+    });
+  });
+
+  describe('calculateRSIScore', () => {
+    it('should return neutral score for missing RSI data', () => {
+      const rsiData = { rsi: null, period: 14 };
+      const result = ScoreCalculator.calculateRSIScore(rsiData);
+      expect(result).toBe(50);
+    });
+
+    it('should give perfect score for ideal RSI range (40-60)', () => {
+      const rsiData = { rsi: 50, period: 14 };
+      const result = ScoreCalculator.calculateRSIScore(rsiData);
+      expect(result).toBe(100);
+    });
+
+    it('should give high score for good RSI range (30-70)', () => {
+      const rsiData = { rsi: 35, period: 14 };
+      const result = ScoreCalculator.calculateRSIScore(rsiData);
+      expect(result).toBe(85);
+      
+      const rsiData2 = { rsi: 65, period: 14 };
+      const result2 = ScoreCalculator.calculateRSIScore(rsiData2);
+      expect(result2).toBe(85);
+    });
+
+    it('should give moderate score for acceptable range (20-80)', () => {
+      const rsiData = { rsi: 25, period: 14 };
+      const result = ScoreCalculator.calculateRSIScore(rsiData);
+      expect(result).toBe(70);
+      
+      const rsiData2 = { rsi: 75, period: 14 };
+      const result2 = ScoreCalculator.calculateRSIScore(rsiData2);
+      expect(result2).toBe(70);
+    });
+
+    it('should penalize overbought conditions (80-90)', () => {
+      const rsiData = { rsi: 85, period: 14 };
+      const result = ScoreCalculator.calculateRSIScore(rsiData);
+      expect(result).toBe(30);
+    });
+
+    it('should heavily penalize extreme overbought (>90)', () => {
+      const rsiData = { rsi: 95, period: 14 };
+      const result = ScoreCalculator.calculateRSIScore(rsiData);
+      expect(result).toBe(10);
+    });
+
+    it('should handle oversold as potential opportunity (<20)', () => {
+      const rsiData = { rsi: 15, period: 14 };
+      const result = ScoreCalculator.calculateRSIScore(rsiData);
+      expect(result).toBe(40);
+    });
+
+    it('should handle extreme oversold (<10)', () => {
+      const rsiData = { rsi: 5, period: 14 };
+      const result = ScoreCalculator.calculateRSIScore(rsiData);
+      expect(result).toBe(20);
+    });
+
+    it('should clamp scores within 0-100 range', () => {
+      const rsiData1 = { rsi: 0, period: 14 };
+      const result1 = ScoreCalculator.calculateRSIScore(rsiData1);
+      expect(result1).toBeGreaterThanOrEqual(0);
+      expect(result1).toBeLessThanOrEqual(100);
+      
+      const rsiData2 = { rsi: 100, period: 14 };
+      const result2 = ScoreCalculator.calculateRSIScore(rsiData2);
+      expect(result2).toBeGreaterThanOrEqual(0);
+      expect(result2).toBeLessThanOrEqual(100);
     });
   });
 });

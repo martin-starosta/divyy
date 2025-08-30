@@ -6,6 +6,11 @@ export interface MacdData {
   histogram: number | null;
 }
 
+export interface RsiData {
+  rsi: number | null;
+  period: number;
+}
+
 export class TechnicalIndicatorCalculator {
   static calculateEMA(data: number[], period: number): number[] {
     if (data.length < period) {
@@ -157,6 +162,141 @@ export class TechnicalIndicatorCalculator {
       signal,
       strength,
       crossover,
+      fundamentalConcerns
+    };
+  }
+
+  /**
+   * Calculate RSI (Relative Strength Index)
+   * @param data Array of closing prices (in chronological order, oldest first)
+   * @param period RSI period (default: 14)
+   * @returns RSI data with current value
+   */
+  static calculateRSI(data: number[], period: number = 14): RsiData {
+    // Need at least period + 1 data points for RSI calculation
+    if (data.length < period + 1) {
+      return {
+        rsi: null,
+        period
+      };
+    }
+
+    const gains: number[] = [];
+    const losses: number[] = [];
+
+    // Calculate price changes
+    for (let i = 1; i < data.length; i++) {
+      const change = data[i] - data[i - 1];
+      gains.push(change > 0 ? change : 0);
+      losses.push(change < 0 ? Math.abs(change) : 0);
+    }
+
+    // Calculate initial averages using SMA for first period
+    let avgGain = gains.slice(0, period).reduce((sum, gain) => sum + gain, 0) / period;
+    let avgLoss = losses.slice(0, period).reduce((sum, loss) => sum + loss, 0) / period;
+
+    // Calculate subsequent averages using Wilder's smoothing method
+    for (let i = period; i < gains.length; i++) {
+      avgGain = ((avgGain * (period - 1)) + gains[i]) / period;
+      avgLoss = ((avgLoss * (period - 1)) + losses[i]) / period;
+    }
+
+    // Calculate RSI
+    if (avgLoss === 0) {
+      return { rsi: 100, period }; // All gains, no losses
+    }
+
+    const rs = avgGain / avgLoss;
+    const rsi = 100 - (100 / (1 + rs));
+
+    return {
+      rsi: Math.round(rsi * 100) / 100, // Round to 2 decimal places
+      period
+    };
+  }
+
+  /**
+   * Analyze RSI signals for trading insights
+   * @param rsiData Current RSI data
+   * @param previousRsi Previous RSI value (optional, for trend analysis)
+   * @returns RSI analysis with signals and conditions
+   */
+  static analyzeRSI(rsiData: RsiData, previousRsi?: number): {
+    signal: 'overbought' | 'oversold' | 'neutral';
+    strength: 'strong' | 'moderate' | 'weak';
+    condition: 'extreme_overbought' | 'extreme_oversold' | 'normal';
+    trend: 'rising' | 'falling' | 'stable';
+    fundamentalConcerns: string[];
+  } {
+    const fundamentalConcerns: string[] = [];
+    
+    // If no RSI data available
+    if (rsiData.rsi === null) {
+      fundamentalConcerns.push('RSI data unavailable');
+      return {
+        signal: 'neutral',
+        strength: 'weak',
+        condition: 'normal',
+        trend: 'stable',
+        fundamentalConcerns
+      };
+    }
+
+    const rsi = rsiData.rsi;
+    
+    // Determine signal based on RSI thresholds
+    let signal: 'overbought' | 'oversold' | 'neutral' = 'neutral';
+    let condition: 'extreme_overbought' | 'extreme_oversold' | 'normal' = 'normal';
+    
+    if (rsi >= 70) {
+      signal = 'overbought';
+      if (rsi >= 80) {
+        condition = 'extreme_overbought';
+      }
+    } else if (rsi <= 30) {
+      signal = 'oversold';
+      if (rsi <= 20) {
+        condition = 'extreme_oversold';
+      }
+    }
+
+    // Determine strength based on how extreme the RSI is
+    let strength: 'strong' | 'moderate' | 'weak' = 'weak';
+    if (rsi >= 80 || rsi <= 20) {
+      strength = 'strong';
+    } else if (rsi >= 70 || rsi <= 30) {
+      strength = 'moderate';
+    }
+
+    // Determine trend if previous RSI is available
+    let trend: 'rising' | 'falling' | 'stable' = 'stable';
+    if (previousRsi !== undefined) {
+      const rsiChange = rsi - previousRsi;
+      if (Math.abs(rsiChange) > 2) { // Significant change threshold
+        trend = rsiChange > 0 ? 'rising' : 'falling';
+      }
+    }
+
+    // Add fundamental concerns based on RSI analysis
+    if (condition === 'extreme_overbought') {
+      fundamentalConcerns.push('Stock severely overbought - potential price correction ahead');
+    } else if (signal === 'overbought' && strength === 'moderate') {
+      fundamentalConcerns.push('Stock overbought - momentum may be unsustainable');
+    }
+
+    if (condition === 'extreme_oversold') {
+      fundamentalConcerns.push('Stock severely oversold - may indicate fundamental issues or opportunity');
+    }
+
+    if (rsi > 70 && trend === 'rising') {
+      fundamentalConcerns.push('RSI rising into overbought territory - consider timing of entry');
+    }
+
+    return {
+      signal,
+      strength,
+      condition,
+      trend,
       fundamentalConcerns
     };
   }

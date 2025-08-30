@@ -39,8 +39,9 @@ export class OutputFormatter {
     // Add technical indicators if available
     const hasEMA = analysis.ema && (analysis.ema.ema20 || analysis.ema.ema50 || analysis.ema.ema200);
     const hasMACD = analysis.macd && (analysis.macd.macdLine !== null || analysis.macd.signalLine !== null);
+    const hasRSI = analysis.rsi && analysis.rsi.rsi !== null;
     
-    if (hasEMA || hasMACD) {
+    if (hasEMA || hasMACD || hasRSI) {
       console.log(`\nTechnical Indicators:`);
       
       // EMA indicators
@@ -83,10 +84,32 @@ export class OutputFormatter {
           console.log(`  - ${crossIcon} ${macdAnalysis.crossover.replace('_', ' ').toUpperCase()}`);
         }
       }
+      
+      // RSI indicators
+      if (hasRSI) {
+        const rsiAnalysis = TechnicalIndicatorCalculator.analyzeRSI(analysis.rsi);
+        const signalIcon = rsiAnalysis.signal === 'overbought' ? '📈🔴' : 
+                          rsiAnalysis.signal === 'oversold' ? '📉🟢' : '📊';
+        
+        const conditionText = rsiAnalysis.condition === 'extreme_overbought' ? 'EXTREME OVERBOUGHT' :
+                             rsiAnalysis.condition === 'extreme_oversold' ? 'EXTREME OVERSOLD' :
+                             rsiAnalysis.signal.toUpperCase();
+        
+        console.log(`• RSI(${analysis.rsi.period}): ${signalIcon} ${this.formatNumber(analysis.rsi.rsi, 1)} (${conditionText})`);
+        
+        if (rsiAnalysis.strength !== 'weak') {
+          console.log(`  - Strength: ${rsiAnalysis.strength.toUpperCase()}`);
+        }
+        
+        if (rsiAnalysis.trend !== 'stable') {
+          const trendIcon = rsiAnalysis.trend === 'rising' ? '⬆️' : '⬇️';
+          console.log(`  - Trend: ${trendIcon} ${rsiAnalysis.trend.toUpperCase()}`);
+        }
+      }
     }
     
     console.log(`\nDividend Potential Score: ${totalScore}/100`);
-    console.log(`• Drivers → payout:${this.formatNumber(scores.payout, 0)} fcf:${this.formatNumber(scores.fcf, 0)} streak:${this.formatNumber(scores.streak, 0)} growth:${this.formatNumber(scores.growth, 0)} trend:${this.formatNumber(scores.trend, 0)} macd:${this.formatNumber(scores.macd, 0)}`);
+    console.log(`• Drivers → payout:${this.formatNumber(scores.payout, 0)} fcf:${this.formatNumber(scores.fcf, 0)} streak:${this.formatNumber(scores.streak, 0)} growth:${this.formatNumber(scores.growth, 0)} trend:${this.formatNumber(scores.trend, 0)} macd:${this.formatNumber(scores.macd, 0)} rsi:${this.formatNumber(scores.rsi, 0)}`);
   }
 
   static formatGordonGrowthModel(ddmPrice: number | null, currentPrice: number, requiredReturn: number, safeGrowth: number): void {
