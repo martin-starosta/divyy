@@ -188,4 +188,152 @@ describe('TechnicalIndicatorCalculator', () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe('RSI Calculation', () => {
+    describe('calculateRSI', () => {
+      it('should return null for insufficient data', () => {
+        const data = [100, 101, 102, 103]; // Only 4 points, need 15 (14 + 1)
+        const result = TechnicalIndicatorCalculator.calculateRSI(data, 14);
+        expect(result.rsi).toBe(null);
+        expect(result.period).toBe(14);
+      });
+
+      it('should calculate RSI correctly with trending up data', () => {
+        // Create 20 days of generally upward trending data
+        const prices = [
+          44, 44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.85, 46.08, 45.89,
+          46.03, 46.83, 47.69, 46.49, 46.26, 47.09, 46.66, 46.80, 46.23, 46.95
+        ];
+        
+        const result = TechnicalIndicatorCalculator.calculateRSI(prices, 14);
+        
+        expect(result.rsi).not.toBe(null);
+        expect(result.rsi).toBeGreaterThan(40);
+        expect(result.rsi).toBeLessThan(80);
+        expect(result.period).toBe(14);
+      });
+
+      it('should calculate RSI correctly with trending down data', () => {
+        // Create 20 days of generally downward trending data with some small bounces
+        const prices = [
+          50, 49.5, 49, 48.8, 48, 47.8, 47, 46.9, 46, 45.8,
+          45, 44.8, 44, 43.9, 43, 42.8, 42, 41.9, 41, 40.8
+        ];
+        
+        const result = TechnicalIndicatorCalculator.calculateRSI(prices, 14);
+        
+        expect(result.rsi).not.toBe(null);
+        expect(result.rsi).toBeGreaterThanOrEqual(0); // RSI can be 0 if all losses
+        expect(result.rsi).toBeLessThan(50);
+        expect(result.period).toBe(14);
+      });
+
+      it('should return RSI 100 for all gains scenario', () => {
+        // All gains, no losses
+        const prices = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
+                       110, 111, 112, 113, 114, 115, 116, 117, 118, 119];
+        
+        const result = TechnicalIndicatorCalculator.calculateRSI(prices, 14);
+        
+        expect(result.rsi).toBe(100);
+        expect(result.period).toBe(14);
+      });
+
+      it('should work with custom period', () => {
+        const prices = Array.from({ length: 25 }, (_, i) => 100 + Math.sin(i * 0.3) * 2);
+        
+        const result = TechnicalIndicatorCalculator.calculateRSI(prices, 21);
+        
+        expect(result.rsi).not.toBe(null);
+        expect(result.period).toBe(21);
+      });
+    });
+
+    describe('analyzeRSI', () => {
+      it('should identify overbought conditions', () => {
+        const rsiData = { rsi: 75, period: 14 };
+        const analysis = TechnicalIndicatorCalculator.analyzeRSI(rsiData);
+        
+        expect(analysis.signal).toBe('overbought');
+        expect(analysis.strength).toBe('moderate');
+        expect(analysis.condition).toBe('normal');
+        expect(analysis.fundamentalConcerns.length).toBeGreaterThan(0);
+      });
+
+      it('should identify extreme overbought conditions', () => {
+        const rsiData = { rsi: 85, period: 14 };
+        const analysis = TechnicalIndicatorCalculator.analyzeRSI(rsiData);
+        
+        expect(analysis.signal).toBe('overbought');
+        expect(analysis.strength).toBe('strong');
+        expect(analysis.condition).toBe('extreme_overbought');
+        expect(analysis.fundamentalConcerns).toContain('Stock severely overbought - potential price correction ahead');
+      });
+
+      it('should identify oversold conditions', () => {
+        const rsiData = { rsi: 25, period: 14 };
+        const analysis = TechnicalIndicatorCalculator.analyzeRSI(rsiData);
+        
+        expect(analysis.signal).toBe('oversold');
+        expect(analysis.strength).toBe('moderate');
+        expect(analysis.condition).toBe('normal');
+      });
+
+      it('should identify extreme oversold conditions', () => {
+        const rsiData = { rsi: 15, period: 14 };
+        const analysis = TechnicalIndicatorCalculator.analyzeRSI(rsiData);
+        
+        expect(analysis.signal).toBe('oversold');
+        expect(analysis.strength).toBe('strong');
+        expect(analysis.condition).toBe('extreme_oversold');
+        expect(analysis.fundamentalConcerns).toContain('Stock severely oversold - may indicate fundamental issues or opportunity');
+      });
+
+      it('should identify neutral conditions', () => {
+        const rsiData = { rsi: 50, period: 14 };
+        const analysis = TechnicalIndicatorCalculator.analyzeRSI(rsiData);
+        
+        expect(analysis.signal).toBe('neutral');
+        expect(analysis.strength).toBe('weak');
+        expect(analysis.condition).toBe('normal');
+        expect(analysis.fundamentalConcerns.length).toBe(0);
+      });
+
+      it('should detect rising trend', () => {
+        const rsiData = { rsi: 75, period: 14 };
+        const previousRsi = 70;
+        const analysis = TechnicalIndicatorCalculator.analyzeRSI(rsiData, previousRsi);
+        
+        expect(analysis.trend).toBe('rising');
+        expect(analysis.fundamentalConcerns).toContain('RSI rising into overbought territory - consider timing of entry');
+      });
+
+      it('should detect falling trend', () => {
+        const rsiData = { rsi: 65, period: 14 };
+        const previousRsi = 70;
+        const analysis = TechnicalIndicatorCalculator.analyzeRSI(rsiData, previousRsi);
+        
+        expect(analysis.trend).toBe('falling');
+      });
+
+      it('should detect stable trend', () => {
+        const rsiData = { rsi: 50, period: 14 };
+        const previousRsi = 51; // Change less than 2 points
+        const analysis = TechnicalIndicatorCalculator.analyzeRSI(rsiData, previousRsi);
+        
+        expect(analysis.trend).toBe('stable');
+      });
+
+      it('should handle null RSI data', () => {
+        const rsiData = { rsi: null, period: 14 };
+        const analysis = TechnicalIndicatorCalculator.analyzeRSI(rsiData);
+        
+        expect(analysis.signal).toBe('neutral');
+        expect(analysis.strength).toBe('weak');
+        expect(analysis.condition).toBe('normal');
+        expect(analysis.trend).toBe('stable');
+        expect(analysis.fundamentalConcerns).toContain('RSI data unavailable');
+      });
+    });
+  });
 });

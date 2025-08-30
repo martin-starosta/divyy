@@ -1,5 +1,5 @@
 import type { Quote, Fundamentals } from './StockData.js';
-import { MacdData } from "../calculators/TechnicalIndicatorCalculator.js";
+import { MacdData, RsiData } from "../calculators/TechnicalIndicatorCalculator.js";
 
 export type AnnualDividendData = [year: number, amount: number];
 
@@ -20,6 +20,7 @@ export interface DividendAnalysisParams {
   totalScore: number;
   ema: EmaData;
   macd: MacdData;
+  rsi: RsiData;
 }
 
 export class DividendAnalysis {
@@ -39,6 +40,7 @@ export class DividendAnalysis {
   public readonly totalScore: number;
   public readonly ema: EmaData;
   public readonly macd: MacdData;
+  public readonly rsi: RsiData;
 
   constructor({
     ticker,
@@ -56,7 +58,8 @@ export class DividendAnalysis {
     scores,
     totalScore,
     ema,
-    macd
+    macd,
+    rsi
   }: DividendAnalysisParams) {
     this.ticker = ticker;
     this.quote = quote;
@@ -74,6 +77,7 @@ export class DividendAnalysis {
     this.totalScore = totalScore;
     this.ema = ema;
     this.macd = macd;
+    this.rsi = rsi;
   }
 }
 
@@ -90,6 +94,7 @@ export interface DividendScoresParams {
   growth: number;
   trend: number;
   macd: number;
+  rsi: number;
 }
 
 export class DividendScores {
@@ -99,13 +104,15 @@ export class DividendScores {
   public readonly growth: number;
   public readonly trend: number;
   public readonly macd: number;
+  public readonly rsi: number;
 
-  constructor({ payout, fcf, streak, growth, trend, macd }: DividendScoresParams) {
+  constructor({ payout, fcf, streak, growth, trend, macd, rsi }: DividendScoresParams) {
     this.payout = payout;
     this.fcf = fcf;
     this.streak = streak;
     this.growth = growth;
     this.trend = trend;
     this.macd = macd;
+    this.rsi = rsi;
   }
 }

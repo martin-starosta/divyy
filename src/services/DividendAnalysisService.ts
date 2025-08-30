@@ -6,7 +6,7 @@ import { DividendAnalysis, EmaData } from "../models/DividendAnalysis.js";
 import { DividendEliteDetector } from "../data/DividendAristocrats.js";
 import { calculateCAGR } from "../utils/MathUtils.js";
 import { DatabaseService, type AnalysisOptions } from "./DatabaseService.js";
-import { TechnicalIndicatorCalculator, MacdData } from "../calculators/TechnicalIndicatorCalculator.js";
+import { TechnicalIndicatorCalculator, MacdData, RsiData } from "../calculators/TechnicalIndicatorCalculator.js";
 
 export class DividendAnalysisService {
   private readonly yahooService: YahooFinanceService;
@@ -128,8 +128,10 @@ export class DividendAnalysisService {
 
     let ema: EmaData = { ema20: null, ema50: null, ema200: null };
     let macd: MacdData = { macdLine: null, signalLine: null, histogram: null };
+    let rsi: RsiData = { rsi: null, period: 14 };
     let emaSource = 'none';
     let macdSource = 'none';
+    let rsiSource = 'none';
     
     // Try Alpha Vantage first for EMA calculations
     if (this.alphaVantageService && (provider === 'av' || provider === 'auto')) {
@@ -149,11 +151,22 @@ export class DividendAnalysisService {
           };
           emaSource = 'alphavantage';
           
-          // Calculate MACD using the same data (need at least 35 points for MACD)
+          // Calculate MACD and RSI using the same data 
+          const indicators = [];
           if (closePrices.length >= 35) {
             macd = TechnicalIndicatorCalculator.calculateMACD(closePrices);
             macdSource = 'alphavantage';
-            console.log(`📊 EMA & MACD calculated using Alpha Vantage data (${closePrices.length} data points)`);
+            indicators.push('MACD');
+          }
+          
+          if (closePrices.length >= 15) { // Need at least 15 points for RSI (14 + 1)
+            rsi = TechnicalIndicatorCalculator.calculateRSI(closePrices);
+            rsiSource = 'alphavantage';
+            indicators.push('RSI');
+          }
+          
+          if (indicators.length > 0) {
+            console.log(`📊 EMA & ${indicators.join(' & ')} calculated using Alpha Vantage data (${closePrices.length} data points)`);
           } else {
             console.log(`📊 EMA calculated using Alpha Vantage data (${closePrices.length} data points)`);
           }
@@ -183,11 +196,22 @@ export class DividendAnalysisService {
           };
           emaSource = 'yahoo';
           
-          // Calculate MACD using Yahoo Finance data if not already calculated
+          // Calculate MACD and RSI using Yahoo Finance data if not already calculated
+          const indicators = [];
           if (macdSource === 'none' && closePrices.length >= 35) {
             macd = TechnicalIndicatorCalculator.calculateMACD(closePrices);
             macdSource = 'yahoo';
-            console.log(`📊 EMA & MACD calculated using Yahoo Finance data (${closePrices.length} data points)`);
+            indicators.push('MACD');
+          }
+          
+          if (rsiSource === 'none' && closePrices.length >= 15) {
+            rsi = TechnicalIndicatorCalculator.calculateRSI(closePrices);
+            rsiSource = 'yahoo';
+            indicators.push('RSI');
+          }
+          
+          if (indicators.length > 0) {
+            console.log(`📊 EMA & ${indicators.join(' & ')} calculated using Yahoo Finance data (${closePrices.length} data points)`);
           } else {
             console.log(`📊 EMA calculated using Yahoo Finance data (${closePrices.length} data points)`);
           }
@@ -199,7 +223,7 @@ export class DividendAnalysisService {
       }
     }
 
-    const scores = ScoreCalculator.calculateDividendScores(fundamentals, streak, safeGrowth, quote, ema, macd);
+    const scores = ScoreCalculator.calculateDividendScores(fundamentals, streak, safeGrowth, quote, ema, macd, rsi);
     const totalScore = ScoreCalculator.calculateTotalScore(scores);
     
     // Analyze EMA trends for fundamental concerns
@@ -229,7 +253,8 @@ export class DividendAnalysisService {
       scores,
       totalScore,
       ema,
-      macd
+      macd,
+      rsi
     });
 
     // Save to database if requested
