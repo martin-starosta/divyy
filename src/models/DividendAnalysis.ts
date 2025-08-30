@@ -1,4 +1,5 @@
 import type { Quote, Fundamentals } from './StockData.js';
+import { MacdData } from "../calculators/TechnicalIndicatorCalculator.js";
 
 export type AnnualDividendData = [year: number, amount: number];
 
@@ -18,6 +19,7 @@ export interface DividendAnalysisParams {
   scores: DividendScores;
   totalScore: number;
   ema: EmaData;
+  macd: MacdData;
 }
 
 export class DividendAnalysis {
@@ -36,6 +38,7 @@ export class DividendAnalysis {
   public readonly scores: DividendScores;
   public readonly totalScore: number;
   public readonly ema: EmaData;
+  public readonly macd: MacdData;
 
   constructor({
     ticker,
@@ -52,7 +55,8 @@ export class DividendAnalysis {
     forwardYield,
     scores,
     totalScore,
-    ema
+    ema,
+    macd
   }: DividendAnalysisParams) {
     this.ticker = ticker;
     this.quote = quote;
@@ -69,6 +73,7 @@ export class DividendAnalysis {
     this.scores = scores;
     this.totalScore = totalScore;
     this.ema = ema;
+    this.macd = macd;
   }
 }
 
@@ -84,6 +89,7 @@ export interface DividendScoresParams {
   streak: number;
   growth: number;
   trend: number;
+  macd: number;
 }
 
 export class DividendScores {
@@ -92,12 +98,14 @@ export class DividendScores {
   public readonly streak: number;
   public readonly growth: number;
   public readonly trend: number;
+  public readonly macd: number;
 
-  constructor({ payout, fcf, streak, growth, trend }: DividendScoresParams) {
+  constructor({ payout, fcf, streak, growth, trend, macd }: DividendScoresParams) {
     this.payout = payout;
     this.fcf = fcf;
     this.streak = streak;
     this.growth = growth;
     this.trend = trend;
+    this.macd = macd;
   }
 }

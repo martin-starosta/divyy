@@ -202,6 +202,19 @@ export class DivvyCliApp {
       }
     }
     
+    // Check MACD signals for fundamental concerns
+    if (analysis.macd && (analysis.macd.macdLine !== null || analysis.macd.signalLine !== null)) {
+      const { TechnicalIndicatorCalculator } = await import('../calculators/TechnicalIndicatorCalculator.js');
+      const macdAnalysis = TechnicalIndicatorCalculator.analyzeMACD(analysis.macd);
+      
+      // Add MACD-specific warnings
+      macdAnalysis.fundamentalConcerns.forEach(concern => {
+        if (concern !== 'MACD data unavailable') {
+          warnings.push(concern);
+        }
+      });
+    }
+    
     return warnings;
   }
   
