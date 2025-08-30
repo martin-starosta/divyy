@@ -147,7 +147,9 @@ export class DatabaseService {
             forwardDividend: analysis.forwardDividend,
             forwardYield: analysis.forwardYield,
             scores: analysis.scores,
-            totalScore: analysis.totalScore
+            totalScore: analysis.totalScore,
+            ema: analysis.ema,
+            macd: analysis.macd
           },
           options,
           savedAt: new Date().toISOString()
@@ -278,7 +280,8 @@ export class DatabaseService {
       fcf: rawAnalysis.scores.fcf,
       streak: rawAnalysis.scores.streak,
       growth: rawAnalysis.scores.growth,
-      trend: rawAnalysis.scores.trend || 0 // Default to 0 if not present in old data
+      trend: rawAnalysis.scores.trend || 0, // Default to 0 if not present in old data
+      macd: rawAnalysis.scores.macd || 50 // Default to 50 (neutral) if not present in old data
     });
 
     // Reconstruct EMA data (default to null if not present in old data)
@@ -286,6 +289,13 @@ export class DatabaseService {
       ema20: rawAnalysis.ema?.ema20 || null,
       ema50: rawAnalysis.ema?.ema50 || null,
       ema200: rawAnalysis.ema?.ema200 || null
+    };
+
+    // Reconstruct MACD data (default to null if not present in old data)
+    const macd = {
+      macdLine: rawAnalysis.macd?.macdLine || null,
+      signalLine: rawAnalysis.macd?.signalLine || null,
+      histogram: rawAnalysis.macd?.histogram || null
     };
 
     // Create and return the full DividendAnalysis
@@ -304,7 +314,8 @@ export class DatabaseService {
       forwardYield: rawAnalysis.forwardYield,
       scores,
       totalScore: rawAnalysis.totalScore,
-      ema
+      ema,
+      macd
     });
   }
 }

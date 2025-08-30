@@ -1,6 +1,7 @@
 import { clamp } from "../utils/MathUtils.js";
 import { DividendScores, EmaData } from "../models/DividendAnalysis.js";
 import type { Fundamentals, Quote } from "../models/StockData.js";
+import { MacdData } from "./TechnicalIndicatorCalculator.js";
 
 export class ScoreCalculator {
   static calculatePayoutScore(payoutRatio: number): number {
@@ -64,19 +65,62 @@ export class ScoreCalculator {
     return Math.max(0, score);
   }
 
+  static calculateMACDScore(macd: MacdData): number {
+    // If no MACD data available, return neutral score
+    if (!macd || macd.macdLine === null || macd.signalLine === null || macd.histogram === null) {
+      return 50; // Neutral score when data unavailable
+    }
+
+    let score = 50; // Start with neutral score
+
+    // MACD Line vs Signal Line (primary signal)
+    if (macd.macdLine > macd.signalLine) {
+      // Bullish signal
+      const diff = macd.macdLine - macd.signalLine;
+      score += Math.min(30, diff * 15); // Up to 30 points for strong bullish signal
+    } else {
+      // Bearish signal
+      const diff = macd.signalLine - macd.macdLine;
+      score -= Math.min(30, diff * 15); // Down to 30 points for strong bearish signal
+    }
+
+    // Histogram analysis (momentum)
+    if (macd.histogram > 0) {
+      // Positive momentum
+      score += Math.min(20, macd.histogram * 10); // Up to 20 points for strong positive momentum
+    } else {
+      // Negative momentum
+      score -= Math.min(20, Math.abs(macd.histogram) * 10); // Down to 20 points for strong negative momentum
+    }
+
+    // MACD line position relative to zero (trend strength)
+    if (macd.macdLine > 0) {
+      // Above zero line - bullish trend
+      score += Math.min(10, macd.macdLine * 5);
+    } else {
+      // Below zero line - bearish trend  
+      score -= Math.min(10, Math.abs(macd.macdLine) * 5);
+    }
+
+    // Ensure score stays within 0-100 range
+    return Math.max(0, Math.min(100, score));
+  }
+
   static calculateDividendScores(
     fundamentals: Fundamentals, 
     streak: number, 
     safeGrowth: number,
     quote: Quote,
-    ema: EmaData
+    ema: EmaData,
+    macd: MacdData
   ): DividendScores {
     return new DividendScores({
       payout: this.calculatePayoutScore(fundamentals.epsPayoutRatio),
       fcf: this.calculateFCFCoverageScore(fundamentals.fcfCoverage, fundamentals.epsPayoutRatio),
       streak: this.calculateStreakScore(streak),
       growth: this.calculateGrowthScore(safeGrowth),
-      trend: this.calculateTrendScore(quote.price, ema)
+      trend: this.calculateTrendScore(quote.price, ema),
+      macd: this.calculateMACDScore(macd)
     });
   }
 
@@ -84,9 +128,10 @@ export class ScoreCalculator {
     return Math.round(
       0.25 * scores.payout +
       0.25 * scores.fcf +
-      0.20 * scores.streak +
-      0.20 * scores.growth +
-      0.10 * scores.trend
+      0.18 * scores.streak +
+      0.17 * scores.growth +
+      0.08 * scores.trend +
+      0.07 * scores.macd
     );
   }
 

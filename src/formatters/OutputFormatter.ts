@@ -1,5 +1,6 @@
 import type { DividendAnalysis } from '../models/DividendAnalysis.js';
 import { DividendEliteDetector } from '../data/DividendAristocrats.js';
+import { TechnicalIndicatorCalculator } from '../calculators/TechnicalIndicatorCalculator.js';
 
 export class OutputFormatter {
   static formatPercentage(value: number | null): string {
@@ -35,25 +36,57 @@ export class OutputFormatter {
     console.log(`Safe growth used:      ${this.formatPercentage(safeGrowth)}`);
     console.log(`Expected fwd yield:    ${this.formatPercentage(forwardYield)}  (from D1=${this.formatNumber(forwardDividend)})`);
     
-    // Add EMA information if available
-    if (analysis.ema && (analysis.ema.ema20 || analysis.ema.ema50 || analysis.ema.ema200)) {
+    // Add technical indicators if available
+    const hasEMA = analysis.ema && (analysis.ema.ema20 || analysis.ema.ema50 || analysis.ema.ema200);
+    const hasMACD = analysis.macd && (analysis.macd.macdLine !== null || analysis.macd.signalLine !== null);
+    
+    if (hasEMA || hasMACD) {
       console.log(`\nTechnical Indicators:`);
-      if (analysis.ema.ema200) {
-        const ema200Status = quote.price > analysis.ema.ema200 ? 'ABOVE' : 'BELOW';
-        console.log(`• EMA200: ${this.formatNumber(analysis.ema.ema200)} (${ema200Status})`);
+      
+      // EMA indicators
+      if (hasEMA) {
+        if (analysis.ema.ema200) {
+          const ema200Status = quote.price > analysis.ema.ema200 ? 'ABOVE' : 'BELOW';
+          console.log(`• EMA200: ${this.formatNumber(analysis.ema.ema200)} (${ema200Status})`);
+        }
+        if (analysis.ema.ema50) {
+          const ema50Status = quote.price > analysis.ema.ema50 ? 'ABOVE' : 'BELOW';
+          console.log(`• EMA50:  ${this.formatNumber(analysis.ema.ema50)} (${ema50Status})`);
+        }
+        if (analysis.ema.ema20) {
+          const ema20Status = quote.price > analysis.ema.ema20 ? 'ABOVE' : 'BELOW';
+          console.log(`• EMA20:  ${this.formatNumber(analysis.ema.ema20)} (${ema20Status})`);
+        }
       }
-      if (analysis.ema.ema50) {
-        const ema50Status = quote.price > analysis.ema.ema50 ? 'ABOVE' : 'BELOW';
-        console.log(`• EMA50:  ${this.formatNumber(analysis.ema.ema50)} (${ema50Status})`);
-      }
-      if (analysis.ema.ema20) {
-        const ema20Status = quote.price > analysis.ema.ema20 ? 'ABOVE' : 'BELOW';
-        console.log(`• EMA20:  ${this.formatNumber(analysis.ema.ema20)} (${ema20Status})`);
+      
+      // MACD indicators
+      if (hasMACD) {
+        const macdAnalysis = TechnicalIndicatorCalculator.analyzeMACD(analysis.macd);
+        const signalIcon = macdAnalysis.signal === 'bullish' ? '📈' : 
+                          macdAnalysis.signal === 'bearish' ? '📉' : '➡️';
+        
+        console.log(`• MACD:   ${signalIcon} ${macdAnalysis.signal.toUpperCase()} (${macdAnalysis.strength})`);
+        
+        if (analysis.macd.macdLine !== null && analysis.macd.signalLine !== null) {
+          console.log(`  - MACD Line: ${this.formatNumber(analysis.macd.macdLine, 4)}`);
+          console.log(`  - Signal:    ${this.formatNumber(analysis.macd.signalLine, 4)}`);
+        }
+        
+        if (analysis.macd.histogram !== null) {
+          const histogramIcon = analysis.macd.histogram > 0 ? '⬆️' : 
+                               analysis.macd.histogram < 0 ? '⬇️' : '➡️';
+          console.log(`  - Histogram: ${this.formatNumber(analysis.macd.histogram, 4)} ${histogramIcon}`);
+        }
+        
+        if (macdAnalysis.crossover !== 'none') {
+          const crossIcon = macdAnalysis.crossover === 'bullish_crossover' ? '🚀' : '⚠️';
+          console.log(`  - ${crossIcon} ${macdAnalysis.crossover.replace('_', ' ').toUpperCase()}`);
+        }
       }
     }
     
     console.log(`\nDividend Potential Score: ${totalScore}/100`);
-    console.log(`• Drivers → payout:${this.formatNumber(scores.payout, 0)} fcf:${this.formatNumber(scores.fcf, 0)} streak:${this.formatNumber(scores.streak, 0)} growth:${this.formatNumber(scores.growth, 0)} trend:${this.formatNumber(scores.trend, 0)}`);
+    console.log(`• Drivers → payout:${this.formatNumber(scores.payout, 0)} fcf:${this.formatNumber(scores.fcf, 0)} streak:${this.formatNumber(scores.streak, 0)} growth:${this.formatNumber(scores.growth, 0)} trend:${this.formatNumber(scores.trend, 0)} macd:${this.formatNumber(scores.macd, 0)}`);
   }
 
   static formatGordonGrowthModel(ddmPrice: number | null, currentPrice: number, requiredReturn: number, safeGrowth: number): void {

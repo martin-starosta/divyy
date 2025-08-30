@@ -6,7 +6,7 @@ import { DividendAnalysis, EmaData } from "../models/DividendAnalysis.js";
 import { DividendEliteDetector } from "../data/DividendAristocrats.js";
 import { calculateCAGR } from "../utils/MathUtils.js";
 import { DatabaseService, type AnalysisOptions } from "./DatabaseService.js";
-import { TechnicalIndicatorCalculator } from "../calculators/TechnicalIndicatorCalculator.js";
+import { TechnicalIndicatorCalculator, MacdData } from "../calculators/TechnicalIndicatorCalculator.js";
 
 export class DividendAnalysisService {
   private readonly yahooService: YahooFinanceService;
@@ -127,7 +127,9 @@ export class DividendAnalysisService {
     const forwardYield = quote.price ? forwardDividend / quote.price : null;
 
     let ema: EmaData = { ema20: null, ema50: null, ema200: null };
+    let macd: MacdData = { macdLine: null, signalLine: null, histogram: null };
     let emaSource = 'none';
+    let macdSource = 'none';
     
     // Try Alpha Vantage first for EMA calculations
     if (this.alphaVantageService && (provider === 'av' || provider === 'auto')) {
@@ -146,7 +148,15 @@ export class DividendAnalysisService {
             ema200: ema200.length > 0 ? ema200[ema200.length - 1] : null,
           };
           emaSource = 'alphavantage';
-          console.log(`📊 EMA calculated using Alpha Vantage data (${closePrices.length} data points)`);
+          
+          // Calculate MACD using the same data (need at least 35 points for MACD)
+          if (closePrices.length >= 35) {
+            macd = TechnicalIndicatorCalculator.calculateMACD(closePrices);
+            macdSource = 'alphavantage';
+            console.log(`📊 EMA & MACD calculated using Alpha Vantage data (${closePrices.length} data points)`);
+          } else {
+            console.log(`📊 EMA calculated using Alpha Vantage data (${closePrices.length} data points)`);
+          }
         } else {
           console.warn(`⚠️  Insufficient Alpha Vantage data for EMA calculation (${closePrices.length} points, need 200+)`);
         }
@@ -172,7 +182,15 @@ export class DividendAnalysisService {
             ema200: ema200.length > 0 ? ema200[ema200.length - 1] : null,
           };
           emaSource = 'yahoo';
-          console.log(`📊 EMA calculated using Yahoo Finance data (${closePrices.length} data points)`);
+          
+          // Calculate MACD using Yahoo Finance data if not already calculated
+          if (macdSource === 'none' && closePrices.length >= 35) {
+            macd = TechnicalIndicatorCalculator.calculateMACD(closePrices);
+            macdSource = 'yahoo';
+            console.log(`📊 EMA & MACD calculated using Yahoo Finance data (${closePrices.length} data points)`);
+          } else {
+            console.log(`📊 EMA calculated using Yahoo Finance data (${closePrices.length} data points)`);
+          }
         } else {
           console.warn(`⚠️  Insufficient Yahoo Finance data for EMA calculation (${closePrices.length} points, need 200+)`);
         }
@@ -181,7 +199,7 @@ export class DividendAnalysisService {
       }
     }
 
-    const scores = ScoreCalculator.calculateDividendScores(fundamentals, streak, safeGrowth, quote, ema);
+    const scores = ScoreCalculator.calculateDividendScores(fundamentals, streak, safeGrowth, quote, ema, macd);
     const totalScore = ScoreCalculator.calculateTotalScore(scores);
     
     // Analyze EMA trends for fundamental concerns
@@ -210,7 +228,8 @@ export class DividendAnalysisService {
       forwardYield,
       scores,
       totalScore,
-      ema
+      ema,
+      macd
     });
 
     // Save to database if requested

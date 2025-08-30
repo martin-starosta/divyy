@@ -161,7 +161,8 @@ describe('ScoreCalculator', () => {
         streak,
         safeGrowth,
         quote as any,
-        ema
+        ema,
+        { macdLine: 0.5, signalLine: 0.3, histogram: 0.2 }
       );
       
       expect(result.payout).toBeGreaterThan(0);
@@ -169,6 +170,7 @@ describe('ScoreCalculator', () => {
       expect(result.streak).toBeGreaterThan(0);
       expect(result.growth).toBeGreaterThan(0);
       expect(result.trend).toBeGreaterThan(0);
+      expect(result.macd).toBeGreaterThan(0);
     });
 
     it('should handle missing fundamental data', () => {
@@ -186,7 +188,8 @@ describe('ScoreCalculator', () => {
         streak,
         safeGrowth,
         quote as any,
-        ema
+        ema,
+        { macdLine: null, signalLine: null, histogram: null }
       );
       
       expect(result.payout).toBe(100); // Default for missing payout ratio
@@ -194,6 +197,7 @@ describe('ScoreCalculator', () => {
       expect(result.streak).toBe(0); // 0 streak = 0 score
       expect(result.growth).toBe(0); // Negative growth = 0 score
       expect(result.trend).toBe(100); // Above all EMAs
+      expect(result.macd).toBe(50); // Neutral score for missing MACD data
     });
   });
 
@@ -204,13 +208,14 @@ describe('ScoreCalculator', () => {
         fcf: 70,
         streak: 60,
         growth: 50,
-        trend: 40
+        trend: 40,
+        macd: 50
       };
       
       const result = ScoreCalculator.calculateTotalScore(scores as any);
       
-      // Expected: (0.25 * 80) + (0.25 * 70) + (0.20 * 60) + (0.20 * 50) + (0.10 * 40) = 62.5
-      expect(result).toBe(64); // Rounded up
+      // Expected: (0.25 * 80) + (0.25 * 70) + (0.18 * 60) + (0.17 * 50) + (0.08 * 40) + (0.07 * 50) = 63.5
+      expect(result).toBe(64); // Rounded
     });
 
     it('should handle perfect scores', () => {
@@ -219,7 +224,8 @@ describe('ScoreCalculator', () => {
         fcf: 100,
         streak: 100,
         growth: 100,
-        trend: 100
+        trend: 100,
+        macd: 100
       };
       
       const result = ScoreCalculator.calculateTotalScore(scores as any);
@@ -232,7 +238,8 @@ describe('ScoreCalculator', () => {
         fcf: 0,
         streak: 0,
         growth: 0,
-        trend: 0
+        trend: 0,
+        macd: 0
       };
       
       const result = ScoreCalculator.calculateTotalScore(scores as any);
