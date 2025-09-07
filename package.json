@@ -44,7 +44,11 @@
     "divvy": "npm run --workspace=@repo/cli start --",
     "setup": "node scripts/dev-setup.js",
     "check": "node scripts/check-workspace.js",
-    "link": "node scripts/link-packages.js"
+    "link": "node scripts/link-packages.js",
+    "build:production": "node scripts/build-production.js",
+    "deploy:vercel": "node scripts/deploy-vercel-simple.js",
+    "deploy:preview": "vercel --token=$VERCEL_TOKEN",
+    "deploy:prod": "vercel --prod --token=$VERCEL_TOKEN"
   },
   "devDependencies": {
     "turbo": "^2.5.6",

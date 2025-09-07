@@ -1,0 +1,29 @@
+import { NextResponse } from 'next/server';
+
+export async function GET(request: Request) {
+  try {
+    // Add your GET logic here
+    return NextResponse.json({ message: '{{pascalCase name}} GET endpoint' });
+  } catch (error) {
+    console.error('Error in {{kebabCase name}} GET:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    
+    // Add your POST logic here
+    return NextResponse.json({ message: '{{pascalCase name}} POST endpoint', data: body });
+  } catch (error) {
+    console.error('Error in {{kebabCase name}} POST:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

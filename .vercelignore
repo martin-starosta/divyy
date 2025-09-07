@@ -1,0 +1,76 @@
+# Vercel ignore file - exclude files from deployment
+
+# Development files
+*.md
+!README.md
+DEVELOPMENT.md
+IMPLEMENTATION_*.md
+PRD*.md
+ERROR_HANDLING.md
+DDM.md
+TURBO_IMPL.md
+tools.md
+
+# Test files
+**/*.test.*
+**/*.spec.*
+tests/
+coverage/
+__tests__/
+
+# Build artifacts (except web app)
+apps/cli/dist/
+packages/*/dist/
+!apps/web/.next/
+!apps/web/dist/
+
+# Configuration files
+tsconfig*.json
+.eslintrc*
+jest.config*
+vitest.config*
+
+# Development dependencies
+node_modules/@types/
+node_modules/typescript/
+node_modules/eslint/
+
+# Scripts and utilities
+scripts/
+hubspot.config.yml
+
+# Database and local files
+*.sql
+supabase/
+schema-setup.sql
+
+# Legacy files
+src/
+index.js
+index.d.ts
+test-*.js
+
+# Environment files (use Vercel dashboard for env vars)
+.env
+.env.local
+.env.*.local
+
+# Cache directories
+.turbo/
+.next/cache/
+node_modules/.cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

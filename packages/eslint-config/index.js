@@ -1,11 +1,8 @@
 // Base ESLint configuration for all packages
 module.exports = {
   extends: [
-    "eslint:recommended",
-    "@typescript-eslint/recommended"
+    "eslint:recommended"
   ],
-  parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint"],
   env: {
     node: true,
     es2022: true
@@ -22,14 +19,25 @@ module.exports = {
     "*.d.ts"
   ],
   rules: {
-    // TypeScript specific overrides
-    "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
-    "@typescript-eslint/explicit-function-return-type": "off",
-    "@typescript-eslint/no-explicit-any": "warn",
-    
     // General code quality
     "no-console": "warn",
     "prefer-const": "error",
     "no-var": "error"
-  }
+  },
+  overrides: [
+    {
+      files: ["**/*.ts", "**/*.tsx"],
+      parser: "@typescript-eslint/parser",
+      plugins: ["@typescript-eslint"],
+      extends: [
+        "eslint:recommended",
+        "@typescript-eslint/recommended"
+      ],
+      rules: {
+        "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-explicit-any": "warn"
+      }
+    }
+  ]
 };
