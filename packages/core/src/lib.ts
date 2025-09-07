@@ -3,6 +3,7 @@ export { DividendAnalysisService } from './services/DividendAnalysisService';
 export { YahooFinanceService } from './services/YahooFinanceService';
 export { AlphaVantageService } from './services/AlphaVantageService';
 export { DatabaseService } from './services/DatabaseService';
+export { FallbackDataProvider } from './services/FallbackDataProvider';
 
 // Calculators
 export { DividendCalculator } from './calculators/DividendCalculator';

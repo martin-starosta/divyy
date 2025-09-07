@@ -11,6 +11,10 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "dev:web": "turbo dev --filter=@repo/web",
+    "dev:cli": "turbo dev --filter=@repo/cli",
+    "build:web": "turbo build --filter=@repo/web",
+    "build:cli": "turbo build --filter=@repo/cli",
     "test": "turbo test",
     "type-check": "turbo type-check",
     "lint": "turbo lint",
