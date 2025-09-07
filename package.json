@@ -1,37 +1,24 @@
 {
-  "name": "divvy-potential-cli",
+  "name": "divvy-monorepo",
   "version": "0.1.0",
-  "description": "CLI that estimates dividend yield potential from free data sources",
+  "description": "Monorepo for Divvy dividend analysis CLI and web app",
+  "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "bin": {
-    "divvy": "./dist/index.js"
-  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "start": "node dist/index.js",
-    "type-check": "tsc --noEmit",
-    "refresh-leaderboard": "node scripts/refresh-leaderboard.js",
-    "test-db": "tsx test-db-connection.js",
-    "test-cache": "tsx test-caching.js",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.56.1",
-    "commander": "^12.1.0",
-    "dotenv": "^17.2.1",
-    "yahoo-finance2": "^2.13.3"
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "test": "turbo test",
+    "type-check": "turbo type-check",
+    "lint": "turbo lint",
+    "clean": "turbo clean"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
-    "@vitest/coverage-v8": "^3.2.4",
-    "@vitest/ui": "^3.2.4",
-    "tsx": "^4.20.5",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
-  }
+    "turbo": "^2.5.6",
+    "typescript": "^5.9.2"
+  },
+  "packageManager": "npm@10.8.1"
 }
