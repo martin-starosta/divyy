@@ -70,7 +70,10 @@
     "yahoo-finance2": "^2.13.3"
   },
   "devDependencies": {
+    "@repo/typescript-config": "file:../typescript-config",
+    "@repo/eslint-config": "file:../eslint-config",
     "@types/node": "^24.3.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "eslint": "^9"
   }
 }

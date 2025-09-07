@@ -15,6 +15,9 @@
     "next": "15.5.2"
   },
   "devDependencies": {
+    "@repo/eslint-config": "file:../../packages/eslint-config",
+    "@repo/typescript-config": "file:../../packages/typescript-config",
+    "@repo/tailwind-config": "file:../../packages/tailwind-config",
     "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^19",

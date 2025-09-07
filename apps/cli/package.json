@@ -18,8 +18,11 @@
     "@repo/core": "0.1.0"
   },
   "devDependencies": {
+    "@repo/typescript-config": "file:../../packages/typescript-config",
+    "@repo/eslint-config": "file:../../packages/eslint-config",
     "@types/node": "^24.3.0",
     "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "eslint": "^9"
   }
 }
