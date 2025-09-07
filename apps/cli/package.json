@@ -9,9 +9,13 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/index.ts",
+    "dev": "tsc --watch",
     "start": "node dist/index.js",
     "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "test": "echo 'No tests configured'",
+    "test:watch": "echo 'No tests configured'",
     "clean": "rm -rf dist"
   },
   "dependencies": {

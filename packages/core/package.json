@@ -61,6 +61,10 @@
     "build": "tsc && node fix-imports.js",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "test": "echo 'No tests configured'",
+    "test:watch": "echo 'No tests configured'",
     "clean": "rm -rf dist"
   },
   "dependencies": {

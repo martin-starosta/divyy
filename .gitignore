@@ -60,3 +60,8 @@ Thumbs.db
 hubspot.config.yml
 
 .turbo
+
+# Next
+apps/web/.next/
+apps/web/dist/
+apps/web/node_modules/

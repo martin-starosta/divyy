@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "type-check": "tsc --noEmit",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "test": "echo 'No tests configured'",
+    "test:watch": "echo 'No tests configured'",
+    "clean": "rm -rf .next dist"
   },
   "dependencies": {
     "@repo/core": "file:../../packages/core",
