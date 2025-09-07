@@ -1,0 +1,83 @@
+{
+  "name": "@repo/core",
+  "version": "0.1.0",
+  "description": "Core business logic for Divvy dividend analysis",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/lib.js",
+      "types": "./dist/lib.d.ts"
+    },
+    "./services/DividendAnalysisService": {
+      "import": "./dist/services/DividendAnalysisService.js",
+      "types": "./dist/services/DividendAnalysisService.d.ts"
+    },
+    "./services/YahooFinanceService": {
+      "import": "./dist/services/YahooFinanceService.js",
+      "types": "./dist/services/YahooFinanceService.d.ts"
+    },
+    "./services/AlphaVantageService": {
+      "import": "./dist/services/AlphaVantageService.js",
+      "types": "./dist/services/AlphaVantageService.d.ts"
+    },
+    "./services/DatabaseService": {
+      "import": "./dist/services/DatabaseService.js",
+      "types": "./dist/services/DatabaseService.d.ts"
+    },
+    "./calculators/DividendCalculator": {
+      "import": "./dist/calculators/DividendCalculator.js",
+      "types": "./dist/calculators/DividendCalculator.d.ts"
+    },
+    "./calculators/ScoreCalculator": {
+      "import": "./dist/calculators/ScoreCalculator.js",
+      "types": "./dist/calculators/ScoreCalculator.d.ts"
+    },
+    "./models/DividendAnalysis": {
+      "import": "./dist/models/DividendAnalysis.js",
+      "types": "./dist/models/DividendAnalysis.d.ts"
+    },
+    "./models/StockData": {
+      "import": "./dist/models/StockData.js",
+      "types": "./dist/models/StockData.d.ts"
+    },
+    "./utils/MathUtils": {
+      "import": "./dist/utils/MathUtils.js",
+      "types": "./dist/utils/MathUtils.d.ts"
+    },
+    "./validation/InputValidator": {
+      "import": "./dist/validation/InputValidator.js",
+      "types": "./dist/validation/InputValidator.d.ts"
+    },
+    "./formatters/OutputFormatter": {
+      "import": "./dist/formatters/OutputFormatter.js",
+      "types": "./dist/formatters/OutputFormatter.d.ts"
+    },
+    "./cli/DivvyCliApp": {
+      "import": "./dist/cli/DivvyCliApp.js",
+      "types": "./dist/cli/DivvyCliApp.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc && node fix-imports.js",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "test": "echo 'No tests configured'",
+    "test:watch": "echo 'No tests configured'",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.56.1",
+    "commander": "^12.1.0",
+    "dotenv": "^17.2.1",
+    "yahoo-finance2": "^2.13.3"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "file:../typescript-config",
+    "@repo/eslint-config": "file:../eslint-config",
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2",
+    "eslint": "^9"
+  }
+}

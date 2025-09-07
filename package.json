@@ -1,37 +1,58 @@
 {
-  "name": "divvy-potential-cli",
+  "name": "divvy-monorepo",
   "version": "0.1.0",
-  "description": "CLI that estimates dividend yield potential from free data sources",
+  "description": "Monorepo for Divvy dividend analysis CLI and web app",
+  "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "bin": {
-    "divvy": "./dist/index.js"
-  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "start": "node dist/index.js",
-    "type-check": "tsc --noEmit",
-    "refresh-leaderboard": "node scripts/refresh-leaderboard.js",
-    "test-db": "tsx test-db-connection.js",
-    "test-cache": "tsx test-caching.js",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.56.1",
-    "commander": "^12.1.0",
-    "dotenv": "^17.2.1",
-    "yahoo-finance2": "^2.13.3"
+    "build": "turbo build",
+    "build:web": "turbo build --filter=@repo/web",
+    "build:cli": "turbo build --filter=@repo/cli",
+    "build:core": "turbo build --filter=@repo/core",
+    "dev": "turbo dev",
+    "dev:web": "turbo dev --filter=@repo/web",
+    "dev:cli": "turbo dev --filter=@repo/cli",
+    "dev:core": "turbo dev --filter=@repo/core",
+    "dev:all": "turbo dev --parallel",
+    "test": "turbo test",
+    "test:watch": "turbo test:watch",
+    "test:web": "turbo test --filter=@repo/web",
+    "test:cli": "turbo test --filter=@repo/cli",
+    "test:core": "turbo test --filter=@repo/core",
+    "type-check": "turbo type-check",
+    "type-check:web": "turbo type-check --filter=@repo/web",
+    "type-check:cli": "turbo type-check --filter=@repo/cli",
+    "type-check:core": "turbo type-check --filter=@repo/core",
+    "lint": "turbo lint",
+    "lint:fix": "turbo lint:fix",
+    "lint:web": "turbo lint --filter=@repo/web",
+    "lint:cli": "turbo lint --filter=@repo/cli", 
+    "lint:core": "turbo lint --filter=@repo/core",
+    "format": "turbo format",
+    "clean": "turbo clean",
+    "clean:web": "turbo clean --filter=@repo/web",
+    "clean:cli": "turbo clean --filter=@repo/cli",
+    "clean:core": "turbo clean --filter=@repo/core",
+    "clean:all": "turbo clean && rm -rf node_modules/.cache && rm -rf .turbo",
+    "reset": "npm run clean:all && rm -rf node_modules && rm -f package-lock.json && npm install",
+    "precommit": "turbo lint type-check",
+    "ci": "turbo build test lint type-check",
+    "divvy": "npm run --workspace=@repo/cli start --",
+    "setup": "node scripts/dev-setup.js",
+    "check": "node scripts/check-workspace.js",
+    "link": "node scripts/link-packages.js",
+    "build:production": "node scripts/build-production.js",
+    "deploy:vercel": "node scripts/deploy-vercel-simple.js",
+    "deploy:preview": "vercel --token=$VERCEL_TOKEN",
+    "deploy:prod": "vercel --prod --token=$VERCEL_TOKEN"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
-    "@vitest/coverage-v8": "^3.2.4",
-    "@vitest/ui": "^3.2.4",
-    "tsx": "^4.20.5",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
-  }
+    "turbo": "^2.5.6",
+    "typescript": "^5.9.2"
+  },
+  "packageManager": "npm@10.8.1"
 }

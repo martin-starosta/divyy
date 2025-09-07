@@ -1,0 +1,12 @@
+# Web app specific ignores
+
+# Source files (only built output needed)
+src/**/*.test.*
+src/**/*.spec.*
+
+# Development files
+*.md
+.env.local.example
+
+# Build cache
+.next/cache/

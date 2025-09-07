@@ -1,0 +1,51 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "buildCommand": "turbo build --filter=@repo/web",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "npm install",
+  "devCommand": "turbo dev --filter=@repo/web",
+  "framework": "nextjs",
+  "functions": {
+    "apps/web/src/app/api/**/*.ts": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "env": {
+    "TURBO_TEAM": "divvy",
+    "TURBO_TOKEN": "@turbo_token"
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production",
+      "NEXT_TELEMETRY_DISABLED": "1"
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers", 
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    }
+  ],
+  "regions": ["iad1"],
+  "crons": []
+}
