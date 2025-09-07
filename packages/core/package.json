@@ -5,60 +5,60 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./src/lib.js",
-      "types": "./src/lib.ts"
+      "import": "./dist/lib.js",
+      "types": "./dist/lib.d.ts"
     },
     "./services/DividendAnalysisService": {
-      "import": "./src/services/DividendAnalysisService.js",
-      "types": "./src/services/DividendAnalysisService.ts"
+      "import": "./dist/services/DividendAnalysisService.js",
+      "types": "./dist/services/DividendAnalysisService.d.ts"
     },
     "./services/YahooFinanceService": {
-      "import": "./src/services/YahooFinanceService.js",
-      "types": "./src/services/YahooFinanceService.ts"
+      "import": "./dist/services/YahooFinanceService.js",
+      "types": "./dist/services/YahooFinanceService.d.ts"
     },
     "./services/AlphaVantageService": {
-      "import": "./src/services/AlphaVantageService.js",
-      "types": "./src/services/AlphaVantageService.ts"
+      "import": "./dist/services/AlphaVantageService.js",
+      "types": "./dist/services/AlphaVantageService.d.ts"
     },
     "./services/DatabaseService": {
-      "import": "./src/services/DatabaseService.js",
-      "types": "./src/services/DatabaseService.ts"
+      "import": "./dist/services/DatabaseService.js",
+      "types": "./dist/services/DatabaseService.d.ts"
     },
     "./calculators/DividendCalculator": {
-      "import": "./src/calculators/DividendCalculator.js",
-      "types": "./src/calculators/DividendCalculator.ts"
+      "import": "./dist/calculators/DividendCalculator.js",
+      "types": "./dist/calculators/DividendCalculator.d.ts"
     },
     "./calculators/ScoreCalculator": {
-      "import": "./src/calculators/ScoreCalculator.js",
-      "types": "./src/calculators/ScoreCalculator.ts"
+      "import": "./dist/calculators/ScoreCalculator.js",
+      "types": "./dist/calculators/ScoreCalculator.d.ts"
     },
     "./models/DividendAnalysis": {
-      "import": "./src/models/DividendAnalysis.js",
-      "types": "./src/models/DividendAnalysis.ts"
+      "import": "./dist/models/DividendAnalysis.js",
+      "types": "./dist/models/DividendAnalysis.d.ts"
     },
     "./models/StockData": {
-      "import": "./src/models/StockData.js",
-      "types": "./src/models/StockData.ts"
+      "import": "./dist/models/StockData.js",
+      "types": "./dist/models/StockData.d.ts"
     },
     "./utils/MathUtils": {
-      "import": "./src/utils/MathUtils.js",
-      "types": "./src/utils/MathUtils.ts"
+      "import": "./dist/utils/MathUtils.js",
+      "types": "./dist/utils/MathUtils.d.ts"
     },
     "./validation/InputValidator": {
-      "import": "./src/validation/InputValidator.js",
-      "types": "./src/validation/InputValidator.ts"
+      "import": "./dist/validation/InputValidator.js",
+      "types": "./dist/validation/InputValidator.d.ts"
     },
     "./formatters/OutputFormatter": {
-      "import": "./src/formatters/OutputFormatter.js",
-      "types": "./src/formatters/OutputFormatter.ts"
+      "import": "./dist/formatters/OutputFormatter.js",
+      "types": "./dist/formatters/OutputFormatter.d.ts"
     },
     "./cli/DivvyCliApp": {
-      "import": "./src/cli/DivvyCliApp.js",
-      "types": "./src/cli/DivvyCliApp.ts"
+      "import": "./dist/cli/DivvyCliApp.js",
+      "types": "./dist/cli/DivvyCliApp.d.ts"
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node fix-imports.js",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
